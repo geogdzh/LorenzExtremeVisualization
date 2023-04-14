@@ -1,4 +1,4 @@
-using HDF5, GLMakie, LinearAlgebra, Statistics, Random
+using HDF5, GLMakie, LinearAlgebra, Statistics, Random, ProgressBars
 using MarkovChainHammer.BayesianMatrix
 using MarkovChainHammer.TransitionMatrix: steady_state
 using MarkovChainHammer.TransitionMatrix: perron_frobenius
@@ -17,5 +17,11 @@ function embedding(current_state)
     argmin([norm(current_state - markov_state) for markov_state in markov_states])
 end
 ##
-markov_indices = [embedding(x[:, i]) for i in 1:size(x, 2)]
+@info "applying embedding"
+markov_indices = zeros(Int, size(x,2))
+for i in ProgressBar(eachindex(markov_indices))
+    markov_indices[i] = embedding(x[:, i])
+end
+##
+@info "generating Bayesian matrix"
 Q = mean(BayesianGenerator(markov_indices; dt = dt))

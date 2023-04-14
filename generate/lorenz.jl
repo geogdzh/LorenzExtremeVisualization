@@ -17,7 +17,7 @@ function lorenz_data(timesteps, Δt, res, ϵ)
         𝒩 = randn(3)
         @inbounds @. x_f[:, i] = step.xⁿ⁺¹ + ϵ * sqrt(Δt) * 𝒩
     end
-    L2 = floor(Int, timesteps / 10)
+    L2 = floor(Int, timesteps / res)
     Dt = Δt * res
     x = zeros(3, L2)
     for i in 1:L2

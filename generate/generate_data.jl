@@ -8,7 +8,7 @@ isdir(pwd() * "/data") ? nothing : mkdir(pwd() * "/data")
 
 # potential well
 if isfile(pwd() * "/data/lorenz.hdf5")
-    @info "potential well data already exists. skipping data generation"
+    @info "lorenz data already exists. skipping data generation"
 else
     include("lorenz.jl")
 end

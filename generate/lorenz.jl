@@ -29,9 +29,7 @@ function lorenz_data(timesteps, Δt, res, ϵ)
 end
 
 lorenz_data(; timesteps=10^7, Δt=0.005, res=1, ϵ=0.0) = lorenz_data(timesteps, Δt, res, ϵ)
-x, dt = lorenz_data(timesteps=10^7)
-
-
+x, dt = lorenz_data(timesteps=10^7, res = 10)
 
 @info "saving data for Lorenz"
 hfile = h5open(pwd() * "/data/lorenz.hdf5", "w")

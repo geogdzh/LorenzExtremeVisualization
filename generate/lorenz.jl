@@ -5,16 +5,14 @@ function lorenz(x, ρ, σ, β)
     return [σ * (x2 - x1), x1 * (ρ - x3) - x2, x1 * x2 - β * x3]
 end
 
-ρ(t) = 28.0 + t / 50000.0
-lorenz(x, t) = lorenz(x, ρ(t), 10.0, 8.0 / 3.0)
-
-function lorenz_data(timesteps, Δt, res, ϵ)
+function lorenz_data(timesteps, Δt, res, ϵ, ρ)
+    rhs(x, t) = lorenz(x, ρ(t), 10.0, 8.0 / 3.0)
     x_f = zeros(3, timesteps)
     x_f[:, 1] = [14.0, 15.0, 27.0]
     evolve = RungeKutta4(3)
     for i in ProgressBar(2:timesteps)
         xOld = x_f[:, i-1]
-        evolve(lorenz, xOld, Δt)
+        evolve(rhs, xOld, Δt)
         𝒩 = randn(3)
         @inbounds @. x_f[:, i] = evolve.xⁿ⁺¹ + ϵ * sqrt(Δt) * 𝒩
     end
@@ -28,7 +26,7 @@ function lorenz_data(timesteps, Δt, res, ϵ)
     return x, Dt
 end
 
-lorenz_data(; timesteps=10^7, Δt=0.005, res=1, ϵ=0.0) = lorenz_data(timesteps, Δt, res, ϵ)
+lorenz_data(; timesteps=10^7, Δt=0.005, res=1, ϵ=0.0, ρ = t -> 28.0 + t / (timesteps * Δt)) = lorenz_data(timesteps, Δt, res, ϵ, ρ)
 x, dt = lorenz_data(timesteps=10^7, res = 10)
 
 @info "saving data for Lorenz"

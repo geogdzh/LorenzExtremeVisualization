@@ -26,7 +26,7 @@ function lorenz_data(timesteps, Δt, res, ϵ, ρ)
     return x, Dt
 end
 
-lorenz_data(; timesteps=10^7, Δt=0.005, res=1, ϵ=0.0, ρ = t -> 28.0 + t / (timesteps * Δt)) = lorenz_data(timesteps, Δt, res, ϵ, ρ)
+lorenz_data(; timesteps=10^7, Δt=0.005, res=1, ϵ=0.0, ρ = t -> 28.0 + 6 * t / (timesteps * Δt)) = lorenz_data(timesteps, Δt, res, ϵ, ρ)
 x, dt = lorenz_data(timesteps=10^7, res = 10)
 
 @info "saving data for Lorenz"

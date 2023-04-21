@@ -1,17 +1,15 @@
 using HDF5, GLMakie, LinearAlgebra, Statistics, Random, ProgressBars
 using MarkovChainHammer.BayesianMatrix
-using MarkovChainHammer.TransitionMatrix: steady_state
+using MarkovChainHammer.TransitionMatrix: steady_state, holding_times
 using MarkovChainHammer.TransitionMatrix: perron_frobenius, generator
 Random.seed!(12345)
 ##
-@info "opening data"
-hfile = h5open("data/lorenz.hdf5")
-x = read(hfile["x"])
-dt = read(hfile["dt"])
-close(hfile)
+# @info "opening data"
+# hfile = h5open("data/lorenz28.hdf5")
+# x = read(hfile["x"])
+# dt = read(hfile["dt"])
+# close(hfile)
 ##
-# This is where the partitioning strategy should be implemented (won't need markov states for your method)
-# This should just be a mapping for R³ -> {1, 2, ..., N} where N is the number of states
 function embedding(current_state)
     state = [0,0,0]
     state[1] = current_state[1] > 0 ? 1 : 0
@@ -23,11 +21,27 @@ function embedding(current_state)
     return map[state]
 end
 ##
-@info "applying embedding"
-markov_indices = zeros(Int, size(x,2))
-for i in ProgressBar(eachindex(markov_indices))
-    markov_indices[i] = embedding(x[:, i])
-end
+# @info "applying embedding"
+# markov_indices = zeros(Int, size(x,2))
+# for i in ProgressBar(eachindex(markov_indices))
+#     markov_indices[i] = embedding(x[:, i])
+# end
 ##
-@info "generating Bayesian matrix"
-Q = mean(BayesianGenerator(markov_indices; dt = dt))
+# @info "generating Bayesian matrix"
+# Q = mean(BayesianGenerator(markov_indices; dt = dt))
+
+# gen26 = generator(markov_indices; dt=dt)
+##
+function get_markov_chain(filename)
+    @info "opening data"
+    hfile = h5open(filename)
+    x = read(hfile["x"])
+    dt = read(hfile["dt"])
+    close(hfile)
+    @info "applying embedding"
+    markov_indices = zeros(Int, size(x,2))
+    for i in ProgressBar(eachindex(markov_indices))
+        markov_indices[i] = embedding(x[:, i])
+    end
+    return markov_indices, dt
+end

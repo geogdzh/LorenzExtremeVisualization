@@ -59,4 +59,33 @@ partitioned_butterfly("./data/lorenz32.hdf5")
 partitioned_butterfly("./data/lorenz-changing-10e6.hdf5")
 
 ##
-# now, holding time comparison:
+# now, holding time comparison: (aggregated)
+
+mc26-ag, dt = get_markov_chain("./data/lorenz26.hdf5"; ag=true)
+mc32-ag, dt = get_markov_chain("./data/lorenz32.hdf5")
+mcdelta-ag, dt = get_markov_chain("./data/lorenz-changing-10e6.hdf5") # is this the one we want to use??
+
+ht_delta = holding_times(mc-delta-ag, 3; dt=dt)
+ht_26 = holding_times(mc26-ag, 3; dt=dt)
+ht_32 = holding_times(mc32-ag, 3; dt=dt)
+
+begin
+    fig = Figure(resolution=(1600, 1200))
+    for i in 1:3
+        ax = Axis(fig[i,1], title="$i (ρ=26)") 
+        hist!(ax, ht_26[i], normalization=:probability,nbins=10)
+    end
+    for i in 1:3
+        ax = Axis(fig[i,2], title="$i (ρ changing)") 
+        hist!(ax, ht_delta[i], normalization=:probability,nbins=10)
+    end
+    for i in 1:3
+        ax = Axis(fig[i,3], title="$i (ρ=32)") 
+        hist!(ax, ht_32[i], normalization=:probability,nbins=10)
+    end
+    # fig[0, 1] = Label(fig, "ρ=26")
+    # xlim!(fig[2,3], (0,4))
+    fig
+end
+
+

@@ -21,18 +21,6 @@ function aggregated_embedding(current_state)
     return state
 end
 
-function z_tercile_thresh(current_state)
-    z = current_state[3]
-    if z<10.6 #bottom 
-        return 1
-    end
-    if z<37.9 #middle
-        return 2
-    end 
-    return 3 #top
-end
-
-
 ##
 function get_markov_chain(filename; f=embedding, ag=false)
     @info "opening data"
@@ -43,13 +31,7 @@ function get_markov_chain(filename; f=embedding, ag=false)
     @info "applying embedding"
     markov_indices = zeros(Int, size(x,2))
     for i in ProgressBar(eachindex(markov_indices))
-        if ag
-            # markov_indices[i] = aggregated_embedding(x[:, i])
-            markov_indices[i] = z_tercile_thresh(x[:, i])
-        else
-            markov_indices[i] = embedding(x[:, i])
-        end
-        # markov_indices[i] = f(x[:, i])
+        markov_indices[i] = f(x[:, i])
     end
     return markov_indices, dt
 end

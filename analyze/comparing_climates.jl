@@ -20,18 +20,17 @@ function partitioned_butterfly(filename)
     for i in ProgressBar(eachindex(markov_indices))
         markov_indices[i] = embedding(x[:, i])
     end
-
     # create colors for the plot
     colors = []
     # non-custom, see https://docs.juliaplots.org/latest/generated/colorschemes/
     # color_choices = cgrad(:rainbow, 12, categorical=true) # 12 is the number of states
     color_choices = [:yellow, :darkgrey, :lightgrey, :pink ,:blue, :lightblue, :lightgreen, :green ,:red, :magenta , :purple, :orange]
 
-    for i in eachindex(x)
-        push!(colors, color_choices[markov_indices[i]]) #no clue why this is throwing an error
+    for i in eachindex(markov_indices)
+        push!(colors, color_choices[markov_indices[i]])
     end
 
-    tuple_timeseries = Tuple.(x)
+    tuple_timeseries = [(x[1, i], x[2, i], x[3, i]) for i in 1:size(x, 2)]
 
     # everything is done for plotting
     fig = Figure(resolution=(1000, 700))
@@ -61,13 +60,13 @@ partitioned_butterfly("./data/lorenz-changing-10e6.hdf5")
 ##
 # now, holding time comparison: (aggregated)
 
-mc26-ag, dt = get_markov_chain("./data/lorenz26.hdf5"; ag=true)
-mc32-ag, dt = get_markov_chain("./data/lorenz32.hdf5")
-mcdelta-ag, dt = get_markov_chain("./data/lorenz-changing-10e6.hdf5") # is this the one we want to use??
+mc26_ag, dt = get_markov_chain("./data/lorenz26.hdf5"; f=aggregated_embedding)
+mc32_ag, dt = get_markov_chain("./data/lorenz32.hdf5"; f=aggregated_embedding)
+mcdelta_ag, dt = get_markov_chain("./data/lorenz-changing-10e6.hdf5"; f=aggregated_embedding) # is this the one we want to use??
 
-ht_delta = holding_times(mc-delta-ag, 3; dt=dt)
-ht_26 = holding_times(mc26-ag, 3; dt=dt)
-ht_32 = holding_times(mc32-ag, 3; dt=dt)
+ht_delta = holding_times(mcdelta_ag, 3; dt=dt)
+ht_26 = holding_times(mc26_ag, 3; dt=dt)
+ht_32 = holding_times(mc32_ag, 3; dt=dt)
 
 begin
     fig = Figure(resolution=(1600, 1200))
@@ -83,8 +82,6 @@ begin
         ax = Axis(fig[i,3], title="$i (ρ=32)") 
         hist!(ax, ht_32[i], normalization=:probability,nbins=10)
     end
-    # fig[0, 1] = Label(fig, "ρ=26")
-    # xlim!(fig[2,3], (0,4))
     fig
 end
 

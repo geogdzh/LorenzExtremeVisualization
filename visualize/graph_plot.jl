@@ -5,13 +5,13 @@ using MarkovChainHammer.TransitionMatrix: perron_frobenius
 using SparseArrays, Graphs, GraphMakie, Printf
 ##
 include(pwd() * "/analyze/lorenz_embedding.jl")
-ρₛ = 26
+ρₛ = 28
 @info "opening data"
 file = "lorenz" * string(ρₛ) * ".hdf5"
 hfile = h5open("data/" * file )
 x = read(hfile["x"])
 dt = read(hfile["dt"])
-X, dt = get_markov_chain("data/lorenz" * string(ρₛ) * ".hdf5")
+X, dt = get_markov_chain("data/lorenz" * string(ρₛ) * ".hdf5") 
 close(hfile)
 ##
 Q = mean(BayesianGenerator(X; dt = dt))
@@ -31,18 +31,18 @@ elabels = string.([round(Q_prim[i]; digits=2) for i in 1:ne(g_Q)])
 # [@sprintf("%.0e", node_labels[i]) for i in 1:nv(G)]
 transparancy = [Q_prim[i] for i in 1:ne(g_Q)]
 elabels_color = [(:black, transparancy[i] > eps(100.0)) for i in 1:ne(g_Q)]
-edge_color_Q = [(:black, transparancy[i]) for i in 1:ne(g_Q)]
+edge_color_Q = [(cgrad(colormap)[(i - 1)÷12 + 1], transparancy[i]) for i in 1:ne(g_Q)]
 node_color = [(cgrad(colormap)[i]) for i in 1:nv(g_Q)]
 edge_attr = (; linestyle=[:dot, :dash, :dash, :dash, :dot, :dash, :dash, :dash, :dot])
 elabels_fontsize = 18
 nlabels_fontsize = 18
-node_size = 30.0
+node_size = 60.0
 
 edge_width_Q = [5.0 for i in 1:ne(g_Q)]
 arrow_size_Q = [20.0 for i in 1:ne(g_Q)]
 node_labels_Q = repr.(1:nv(g_Q))
 
-kwargs_edges = (; elabels=elabels, elabels_color=elabels_color, elabels_fontsize=elabels_fontsize, edge_color=edge_color_Q, edge_width=edge_width_Q)
+kwargs_edges = (; edge_color=edge_color_Q, edge_width=edge_width_Q)# (; elabels=elabels, elabels_color=elabels_color, elabels_fontsize=elabels_fontsize, edge_color=edge_color_Q, edge_width=edge_width_Q)
 kwargs_nodes = (; node_color=node_color, node_size=node_size, nlabels=node_labels_Q, nlabels_fontsize=nlabels_fontsize)
 kwargs_arrows = (; arrow_size=arrow_size_Q)
      
@@ -56,5 +56,5 @@ ax_new = LScene(fig[1, 2]; show_axis=false) # Axis3(fig[1,3])#
 colors = [cgrad(colormap)[X[i]] for i in eachindex(X)]
 inds = 1:1:10000
 scatter!(ax_new, x[1, inds], x[2, inds], x[3, inds], color=colors[inds], markersize=20.0, markerspacing=0.1, markerstrokewidth=0.0)
-rotate_cam!(ax_new.scene, (0.0, -3.5, 0.0))
+rotate_cam!(ax_new.scene, (0.0, -10.5, 0.0))
 display(fig)

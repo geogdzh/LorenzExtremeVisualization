@@ -21,17 +21,17 @@ function aggregated_embedding(current_state)
     return state
 end
 
-##
-function get_markov_chain(filename; f=embedding, ag=false)
-    @info "opening data"
-    hfile = h5open(filename)
-    x = read(hfile["x"])
-    dt = read(hfile["dt"])
-    close(hfile)
-    @info "applying embedding"
-    markov_indices = zeros(Int, size(x,2))
-    for i in ProgressBar(eachindex(markov_indices))
-        markov_indices[i] = f(x[:, i])
-    end
-    return markov_indices, dt
-end
+# ##
+# function get_markov_chain(filename; f=embedding, ag=false)
+#     @info "opening data"
+#     hfile = h5open(filename)
+#     x = read(hfile["x"])
+#     dt = read(hfile["dt"])
+#     close(hfile)
+#     @info "applying embedding"
+#     markov_indices = zeros(Int, size(x,2))
+#     for i in ProgressBar(eachindex(markov_indices))
+#         markov_indices[i] = f(x[:, i])
+#     end
+#     return markov_indices, dt
+# end

@@ -1,24 +1,19 @@
 # make holding time plot, generator, and network graph for static ρ=28 scenario 
-include("lorenz_embedding.jl")
+using MarkovChainHammer: generator
+include("./analyze_util.jl")
 
 # here I need one static run, and then two static and one delta
-markov_chain, dt = get_markov_chain("./data/lorenz28.hdf5")
-
+markov_chain, dt = read_markov_chain("./data/lorenz28.hdf5")
+mc_ag = aggregate(markov_chain)
 
 ## generator shown in paper:
 Q_28 = generator(markov_chain; dt=dt)
 
-## holding time histogram - cut from paper
-# ht = holding_times(markov_chain)
-# begin
-#     fig = Figure(resolution=(1600, 1200))
-#     for i in 1:3, j in 1:4
-#         box = j+4*(i-1) 
-#         ax = Axis(fig[i,j], title="$box") 
-#         hist!(ax, ht[box], 4)
-#     end
-#     fig
-# end
+Q_condensed = generator(mc_ag; dt=dt)
+
+using Latexify
+latexify(round.(Q_condensed, digits=3))
 
 ## network graph
 
+include("../visualize/graph_plot.jl")

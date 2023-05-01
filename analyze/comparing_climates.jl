@@ -1,68 +1,22 @@
 # generate butterflies and holding time comparison
 
-include("./lorenz_embedding.jl")
+include("./analyze_util.jl")
 
 # here I need two static runs and one delta one
-mc26, dt = get_markov_chain("./data/lorenz26.hdf5")
-mc32, dt = get_markov_chain("./data/lorenz32.hdf5")
-mcdelta, dt_delta = get_markov_chain("./data/lorenz-changing-10e6.hdf5") # is this the one we want to use??
+mc26, dt = read_markov_chain("./data/lorenz26.hdf5")
+mc32, dt = read_markov_chain("./data/lorenz32.hdf5")
+mcdelta, dt_delta = read_markov_chain("./data/lorenz-changing-10e6.hdf5")
+
 ##
 
-function partitioned_butterfly(filename)
-    @info "opening data"
-    hfile = h5open(filename)
-    x = read(hfile["x"])
-    dt = read(hfile["dt"]) #does this even work
-    ρ = read(hfile["rho"])
-    close(hfile)
-    @info "applying embedding"
-    markov_indices = zeros(Int, size(x,2))
-    for i in ProgressBar(eachindex(markov_indices))
-        markov_indices[i] = embedding(x[:, i])
-    end
-    # create colors for the plot
-    colors = []
-    # non-custom, see https://docs.juliaplots.org/latest/generated/colorschemes/
-    # color_choices = cgrad(:rainbow, 12, categorical=true) # 12 is the number of states
-    color_choices = [:yellow, :darkgrey, :lightgrey, :pink ,:blue, :lightblue, :lightgreen, :green ,:red, :magenta , :purple, :orange]
-
-    for i in eachindex(markov_indices)
-        push!(colors, color_choices[markov_indices[i]])
-    end
-
-    tuple_timeseries = [(x[1, i], x[2, i], x[3, i]) for i in 1:size(x, 2)]
-
-    # everything is done for plotting
-    fig = Figure(resolution=(1000, 700))
-    ax = LScene(fig[1:2, 1:2]; show_axis=false)
-    lines!(ax, tuple_timeseries, color=colors)
-    rotate_cam!(ax.scene, (pi/6, -π / 4, 0))
-    display(fig)
-
-    # to record video:
-    # last_time_index = minimum([60 * 15 * 2, length(timeseries)])
-    # time_indices = 1:last_time_index
-
-    # function change_function(time_index)
-    #     phase = 2π / (60 * 15)
-    #     rotate_cam!(ax.scene, (0, phase, 0))
-    # end
-
-    #record(change_function, fig, "lorenz_animation_attractor_2.mp4", time_indices; framerate=60)
-
-end
-
-# generate figures
-partitioned_butterfly("./data/lorenz26.hdf5") # need to make sure the data locations are consistent!!
-partitioned_butterfly("./data/lorenz32.hdf5")
-partitioned_butterfly("./data/lorenz-changing-10e6.hdf5")
+include("../visualize/partitioned_butterfly.jl")
 
 ##
 # now, holding time comparison: (aggregated)
 
-mc26_ag, dt = get_markov_chain("./data/lorenz26.hdf5"; f=aggregated_embedding)
-mc32_ag, dt = get_markov_chain("./data/lorenz32.hdf5"; f=aggregated_embedding)
-mcdelta_ag, dt = get_markov_chain("./data/lorenz-changing-10e6.hdf5"; f=aggregated_embedding) # is this the one we want to use??
+mc26_ag = aggregate(mc26)
+mc32_ag = aggregate(mc32)
+mcdelta_ag = aggregate(mcdelta)
 
 ht_delta = holding_times(mcdelta_ag, 3; dt=dt)
 ht_26 = holding_times(mc26_ag, 3; dt=dt)
@@ -70,17 +24,22 @@ ht_32 = holding_times(mc32_ag, 3; dt=dt)
 
 begin
     fig = Figure(resolution=(1600, 1200))
+    lims = [(0,500), (0,500), (0,70)]
     for i in 1:3
         ax = Axis(fig[i,1], title="$i (ρ=26)") 
-        hist!(ax, ht_26[i], normalization=:probability,nbins=10)
-    end
-    for i in 1:3
+        hist!(ax, ht_26[i], normalization=:probability,bins=15)
+        xlims!(lims[i][1], lims[i][2])
+        # ylims!(0, 0.4)
+        #
         ax = Axis(fig[i,2], title="$i (ρ changing)") 
-        hist!(ax, ht_delta[i], normalization=:probability,nbins=10)
-    end
-    for i in 1:3
+        hist!(ax, ht_delta[i], normalization=:probability,bins=15)
+        xlims!(lims[i][1], lims[i][2])
+        # ylims!(0, 0.4)
+        #
         ax = Axis(fig[i,3], title="$i (ρ=32)") 
-        hist!(ax, ht_32[i], normalization=:probability,nbins=10)
+        hist!(ax, ht_32[i], normalization=:probability,bins=15)
+        xlims!(lims[i][1], lims[i][2])
+        # ylims!(0, 0.4)
     end
     fig
 end

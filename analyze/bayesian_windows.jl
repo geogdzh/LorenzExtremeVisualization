@@ -1,28 +1,29 @@
 # generate plot of mean holding times for sliding windows and KL div plot of the same
 using Polynomials
 using Distributions
-include("./lorenz_embedding.jl")
+include("./analyze_util.jl")
 # here I need all of the static sims and all of the changing rho ones
 
 # create dictionary of static environment markov chains
-dt = 0.0 #inefficient?? all of this
+dt = 0.0
 static_mc_dict = Dict{Int64,Vector}()
 for (i, ρₛ) in enumerate(range(26, 32)) 
-    mc, dt = get_markov_chain("data/lorenz"*string(ρₛ)*".hdf5")
+    mc, dt = read_markov_chain("data/lorenz"*string(ρₛ)*".hdf5")
     static_mc_dict[ρₛ] = mc
 end
 
 # create list of sliding window chains
 sliding_mc_dict = Dict()
-for i in range(5,7)# range(5,7) # I don't think the 4 one is enough data at all
+for i in range(5,7)
     sliding_mcs = []
-    mc, dt = get_markov_chain("./data/lorenz-changing-10e" * string(i) * ".hdf5")
+    mc, dt = read_markov_chain("./data/lorenz-changing-10e" * string(i) * ".hdf5")
     deltarho = Int64(floor(length(mc)/6))
     for j in range(0,4)
         push!(sliding_mcs, mc[deltarho*j+1:deltarho*(j+2)])
     end
     sliding_mc_dict[i] = sliding_mcs
 end
+
 middle_values = [27,28,29,30,31]
 sliding_bayesian_dict = Dict()
 for i in range(5,7)
@@ -31,81 +32,33 @@ for i in range(5,7)
 end
 sliding_reference = [BayesianGenerator(static_mc_dict[ρ]; dt=dt) for ρ in 26:32] #bayesian generators from static 
 
-mc_delta, dt = get_markov_chain("./data/lorenz-changing-10e" * string(6) * ".hdf5")
+mc_delta, dt = read_markov_chain("./data/lorenz-changing-10e" * string(6) * ".hdf5")
 bayesian_delta = BayesianGenerator(mc_delta; dt=dt)
 
-##
-function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing)
-    #plot the static reference values of gen entries
-    if n==k
-        entry_list = [-1/(mean(static_ref[i])[n,k]) for i in eachindex(static_ref)] 
-    else
-        entry_list = Float64[]
-        for z in eachindex(static_ref)
-            gen = static_ref[z]
-            alpha_j = gen.posterior.exit_probabilities[n].alpha[k-1] #j-1 only works if looking at transitions into later states!
-            alpha_0 = sum(gen.posterior.exit_probabilities[n].alpha)
-            dist = Distributions.Beta(alpha_j, alpha_0 - alpha_j)
-            push!(entry_list,mean(dist))
-        end 
-    end
-    scatter!(ref_list, entry_list)
-    
-    if sliding_windows !== nothing
-        if n==k
-            sliding_means = [-1/(mean(sliding_windows[i])[n,k]) for i in eachindex(sliding_windows)]
-            sliding_stds = [(sliding_means[i]^2)*std(sliding_windows[i])[n,k] for i in eachindex(sliding_windows)] #according to error propagation
-        else
-            sliding_means = Float64[]
-            sliding_stds = Float64[]
-            for z in eachindex(sliding_windows)
-                gen = sliding_windows[z]
-                alpha_j = gen.posterior.exit_probabilities[n].alpha[k-1] #j-1 only works if looking at transitions into later states!
-                alpha_0 = sum(gen.posterior.exit_probabilities[n].alpha)
-                dist = Distributions.Beta(alpha_j, alpha_0 - alpha_j)
-                push!(sliding_means,mean(dist))
-                push!(sliding_stds, std(dist))
-            end 
-        end
-        errorbars!(middle_values, sliding_means, sliding_stds, color="red")
-        scatter!(middle_values, sliding_means, color="red")
+#############################################
 
-        f1 = [Polynomials.fit(middle_values[1:2:end], sliding_means[1:2:end], 1)[i] for i in 0:1]
-        f2 = [Polynomials.fit(middle_values[1:2:end], sliding_means[1:2:end], 2)[i] for i in 0:2]
-        xs = ref_list[1]:0.1:ref_list[end]
-        lines!(xs, [f1[1]+f1[2]*x for x in xs])
-        lines!(xs, [f2[1]+f2[2]*x+f2[3]*x^2 for x in xs])
-    end
-
-    if bayesian_delta !== nothing
-        if n==k
-            deltamean = -1/(mean(bayesian_delta)[n,k]) 
-            deltastd = (deltamean^2)*std(bayesian_delta)[n,k]
-        else
-            alpha_j = bayesian_delta.posterior.exit_probabilities[n].alpha[k-1] #j-1 only works if looking at transitions into later states!
-            alpha_0 = sum(bayesian_delta.posterior.exit_probabilities[n].alpha)
-            dist = Distributions.Beta(alpha_j, alpha_0 - alpha_j)
-            deltamean = mean(dist)
-            deltastd = std(dist)
-        end
-        scatter!(29, deltamean, color="blue")
-        errorbars!([29], [deltamean], [deltastd], color="blue")
-    end
-end
+include("../visualize/window_plots.jl") # load in plotting functions themselves
 
 function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing)
     ref_list = [x for x in 26:32]
-    fig = Figure(resolution=(1600,1200))
-
-    for i in 1:3, j in 1:4
-        box = j+4*(i-1) 
-        ax = Axis(fig[i,j], title="$box")
-        plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
+    fig = Figure(resolution=(1200,800))
+    ns = [1, 5, 9, 2, 6, 10]
+    for i in 1:2, j in 1:3
+        n = popfirst!(ns)
+        ax = Axis(fig[i,j], title="$n")
+        plot_evolution(n,n, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     end
+    # for i in 1:3, j in 1:4
+    #     box = j+4*(i-1) 
+    #     ax = Axis(fig[i,j], title="$box")
+    #     plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
+    # end
     fig
+    # save("figs/diagonal_evolution.png", fig)
 end
 
 plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta)
+
 
 ##
 
@@ -145,28 +98,6 @@ end
 # metrics, metrics_sig = get_metrics((sliding_bayesians, sl_bayesian_e5, sl_bayesian_e4); significance=2)
 metrics, metrics_sig = get_metrics([sliding_bayesian_dict[i] for i in 5:7]; significance=2)
 
-function plot_kl(n, k, metrics; metrics_sig)
-    colors = ["red", "orange", "green", "blue", "violet"]
-    labels = ["10e5", "10e6", "10e7"]
-    xs = [x for x in 28:31]
-    for list_no in eachindex(metrics) #iterate 1e6 through 1e4
-        #all same color + label
-        tmp = Float64[]
-        marker_shapes = []
-        for m in 1:4
-            push!(tmp, metrics[list_no][m][n,k])
-            if metrics_sig[list_no][m][n,k] 
-                push!(marker_shapes, :circle) #o
-            else
-                push!(marker_shapes, :diamond) #s
-            end
-        end
-        # marker_shapes = [tmp_sig[i] ? 'o' : 's' for i in 1:length(tmp_sig)]
-        scatter!(xs, tmp, color=(colors[list_no], 0.5), marker=marker_shapes, markersize=20, strokewidth=2, strokecolor=:black)
-        lines!(xs, tmp, color=colors[list_no], label=labels[list_no])
-    end
-end
-
 function plot_diag_kl(metrics; metrics_sig)
     fig = Figure(resolution=(3200,1200))
     for i in 1:3, j in 1:4
@@ -181,7 +112,6 @@ end
 plot_diag_kl(metrics; metrics_sig)
 
 ## off-diagonal entries
-
 
 function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing)
     fig = Figure(resolution=(800,800))

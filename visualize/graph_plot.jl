@@ -4,19 +4,22 @@ using MarkovChainHammer.TransitionMatrix: steady_state
 using MarkovChainHammer.TransitionMatrix: perron_frobenius
 using SparseArrays, Graphs, GraphMakie, Printf
 ##
-include(pwd() * "/analyze/lorenz_embedding.jl")
-ρₛ = 28
-@info "opening data"
-file = "lorenz" * string(ρₛ) * ".hdf5"
-hfile = h5open("data/" * file )
-x = read(hfile["x"])
-dt = read(hfile["dt"])
-X, dt = get_markov_chain("data/lorenz" * string(ρₛ) * ".hdf5") 
-close(hfile)
+include(pwd() * "/analyze/analyze_util.jl")
+# ρₛ = 28
+# @info "opening data"
+# file = "lorenz" * string(ρₛ) * ".hdf5"
+# hfile = h5open("data/" * file )
+# x = read(hfile["x"])
+# dt = read(hfile["dt"])
+# mc = read(hfile["mc"])
+# close(hfile)
+mc, dt, x = read_markov_chain("data/lorenz28.hdf5"; include_x=true)
+
 ##
-Q = mean(BayesianGenerator(X; dt = dt))
+Q = mean(BayesianGenerator(mc; dt = dt))
 fig = Figure(resolution=(2000, 1000))
-colormap = :glasbey_hv_n256
+# colormap = :glasbey_hv_n256
+colormap = :Paired_12
 ax_Q = Axis(fig[1, 1]; title="Generator", titlesize=30)
 
 # Generator
@@ -42,7 +45,8 @@ edge_width_Q = [5.0 for i in 1:ne(g_Q)]
 arrow_size_Q = [20.0 for i in 1:ne(g_Q)]
 node_labels_Q = repr.(1:nv(g_Q))
 
-kwargs_edges = (; edge_color=edge_color_Q, edge_width=edge_width_Q)# (; elabels=elabels, elabels_color=elabels_color, elabels_fontsize=elabels_fontsize, edge_color=edge_color_Q, edge_width=edge_width_Q)
+#                   ; edge_color=edge_color_Q, edge_width=edge_width_Q
+kwargs_edges = (; elabels=elabels, elabels_color=elabels_color, elabels_fontsize=elabels_fontsize, edge_color=edge_color_Q, edge_width=edge_width_Q)
 kwargs_nodes = (; node_color=node_color, node_size=node_size, nlabels=node_labels_Q, nlabels_fontsize=nlabels_fontsize)
 kwargs_arrows = (; arrow_size=arrow_size_Q)
      
@@ -53,7 +57,7 @@ hidedecorations!(ax_Q)
 ##
 # 3D plot
 ax_new = LScene(fig[1, 2]; show_axis=false) # Axis3(fig[1,3])# 
-colors = [cgrad(colormap)[X[i]] for i in eachindex(X)]
+colors = [cgrad(colormap)[mc[i]] for i in eachindex(mc)]
 inds = 1:1:10000
 scatter!(ax_new, x[1, inds], x[2, inds], x[3, inds], color=colors[inds], markersize=20.0, markerspacing=0.1, markerstrokewidth=0.0)
 rotate_cam!(ax_new.scene, (0.0, -10.5, 0.0))

@@ -23,6 +23,7 @@ function (step::RungeKutta4)(f, x, dt)
         step.k⃗[:, 4] .= f(step.x̃, step.t[1])
         @. step.xⁿ⁺¹ = x + (step.k⃗[:, 1] + 2 * step.k⃗[:, 2] + 2 * step.k⃗[:, 3] + step.k⃗[:, 4]) * dt / 6
     end
+    return nothing
 end
 
 end # module LorenzExtremeVisualization

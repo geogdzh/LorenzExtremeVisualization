@@ -27,7 +27,7 @@ function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, mid
                 alpha_0 = sum(gen.posterior.exit_probabilities[n].alpha)
                 dist = Distributions.Beta(alpha_j, alpha_0 - alpha_j)
                 push!(sliding_means,mean(dist))
-                push!(sliding_stds, std(dist))
+                push!(sliding_stds, std(dist)) # this is all good bc we do just want to look at the exit probabilities
             end 
         end
         errorbars!(middle_values, sliding_means, sliding_stds.*2, color="red")

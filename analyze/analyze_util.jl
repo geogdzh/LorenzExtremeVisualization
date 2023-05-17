@@ -54,4 +54,3 @@ function realize(Q)
     end
     return real_means, real_stds
 end
-

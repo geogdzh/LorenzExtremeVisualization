@@ -1,4 +1,5 @@
 using LorenzExtremeVisualization, HDF5, Random, ProgressBars
+using MarkovChainHammer.TransitionMatrix: generator
 
 # random seed for reproducibility
 Random.seed!(12345)

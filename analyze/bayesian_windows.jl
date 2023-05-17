@@ -28,6 +28,7 @@ for i in range(5,7)
     sliding_mc_dict[i] = sliding_mcs
 end
 
+#create dict of sliding window generators
 middle_values = [27,28,29,30,31]
 sliding_bayesian_dict = Dict()
 for i in range(5,7)
@@ -38,6 +39,18 @@ sliding_reference = [BayesianGenerator(static_mc_dict[ρ]; dt=dt) for ρ in 26:3
 
 mc_delta, dt = read_markov_chain("./data/lorenz-changing-10e" * string(6) * ".hdf5")
 bayesian_delta = BayesianGenerator(mc_delta; dt=dt)
+
+# load in ensemble
+hfile = h5open("./data/lorenz-changing-ensemble.hdf5")
+Q_full = read(hfile["Q_full"]) #long matrix of full generators incl the 10e6 single-run first, then for all ensembl members
+Q_slices = [] #same here but for each window
+for i in 1:5
+    push!(Q_slices, read(hfile["Q$i"]))
+end
+ensemble_size = read(hfile["ensemble_size"])
+close(hfile)
+
+
 
 #############################################
 
@@ -86,7 +99,7 @@ function get_metrics(arg_list; significance=nothing)
     for bayesian_list in arg_list #arg list ends up being a list of three lists of five bayseian generators
         u += 1
         for dist in bayesian_list[2:end]
-            metric = kl_div(bayesian_list[1], dist) #first the reference, then one under question. also I'm not 100% clear on how it handles this
+            metric = kl_div(bayesian_list[1], dist)
             push!(lists[u], metric)
             if significance !== nothing
                 sig = kl_div(bayesian_list[1], dist; significance=significance)
@@ -165,7 +178,7 @@ for i in eachindex(sliding_mc_dict[6])
 end
 
 begin
-    fig = Figure(resolution=(800,800))
+    fig = Figure(resolution=(600,600))
     ax = Axis(fig[1,1])
     for i in eachindex(sliding_mc_dict[6])
         q = steady_state(generator(sliding_mc_dict[6][i]))
@@ -173,5 +186,31 @@ begin
         lines!(middle_values, kls, label="$(middle_values[i])")
     end
     axislegend(ax, position=:lt)
+    # save("figs/steady_state_kl.png", fig)
+    fig
+end
+
+#### ensemble stuff
+
+
+colors = [:red, :orange, :lightblue, :blue, :violet]
+
+begin
+    fig = Figure(resolution=(600,600))
+    ax = Axis(fig[1,1])
+    for i in eachindex(sliding_mc_dict[6]) #it's just the five windows
+        q = steady_state(Q_slices[i][:,1:12])
+        kls = [discrete_kl(p,q) for p in steady_states]
+        lines!(middle_values, kls, label="$(middle_values[i])", color=colors[i])
+        scatter!(middle_values, kls, color=colors[i])
+
+        for j in 2:ensemble_size
+            q = steady_state(Q_slices[i][:,((j-1)*12+1):(j*12)])
+            kls = [discrete_kl(p,q) for p in steady_states]
+            lines!(middle_values, kls, color=(colors[i],0.25), linestyle=:dot)
+        end
+    end
+    axislegend(ax, position=:lt)
+    # save("figs/steady_state_kl.png", fig)
     fig
 end

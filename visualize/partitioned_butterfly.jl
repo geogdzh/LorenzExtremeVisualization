@@ -4,8 +4,7 @@ include("../analyze/analyze_util.jl")
 
 mc26, dt, x26 = read_markov_chain("./data/lorenz26.hdf5"; include_x=true)
 mc32, dt, x32 = read_markov_chain("./data/lorenz32.hdf5"; include_x=true)
-mcdelta, dt_delta, xdelta = read_markov_chain("./data/lorenz-changing-10e7.hdf5"; include_x=true) 
-
+# mcdelta, dt_delta, xdelta = read_markov_chain("./data/lorenz-changing-10e7.hdf5"; include_x=true) 
 
 
 # create colors for the plot
@@ -25,21 +24,21 @@ colors32 = []
 for i in eachindex(mc32)
     push!(colors32, color_choices[mc32[i]])
 end
-tuple_timeseries_32 = [(x32[1, i], x32[2, i]+80, x32[3, i]) for i in 1:size(x32, 2)]
+tuple_timeseries_32 = [(x32[1, i], x32[2, i]+60, x32[3, i]) for i in 1:size(x32, 2)]
 
-colorsdelta = []
-for i in eachindex(mcdelta)
-    push!(colorsdelta, color_choices[mcdelta[i]])
-end
-tuple_timeseries_delta = [(xdelta[1, i], xdelta[2, i]+40, xdelta[3, i]) for i in 1:size(xdelta, 2)]
+# colorsdelta = []
+# for i in eachindex(mcdelta)
+#     push!(colorsdelta, color_choices[mcdelta[i]])
+# end
+# tuple_timeseries_delta = [(xdelta[1, i], xdelta[2, i]+40, xdelta[3, i]) for i in 1:size(xdelta, 2)]
 
 
-# everything is done for plotting
+# plotting
 fig = Figure(resolution=(2100, 1000))
 ax = LScene(fig[1:2, 1:2]; show_axis=true) # show axis!
 lines!(ax, tuple_timeseries_26, color=colors26)
 lines!(ax, tuple_timeseries_32, color=colors32)
-lines!(ax, tuple_timeseries_delta, color=colorsdelta)
+# lines!(ax, tuple_timeseries_delta, color=colorsdelta)
 rotate_cam!(ax.scene, (pi/6, -π / 4, 0))
 display(fig)
 

@@ -37,19 +37,9 @@ for i in range(5,7)
 end
 sliding_reference = [BayesianGenerator(static_mc_dict[ρ]; dt=dt) for ρ in 26:32] #bayesian generators from static 
 
+# singular overall changing average
 mc_delta, dt = read_markov_chain("./data/lorenz-changing-10e" * string(6) * ".hdf5")
 bayesian_delta = BayesianGenerator(mc_delta; dt=dt)
-
-# load in ensemble
-hfile = h5open("./data/lorenz-changing-ensemble.hdf5")
-Q_full = read(hfile["Q_full"]) #long matrix of full generators incl the 10e6 single-run first, then for all ensembl members
-Q_slices = [] #same here but for each window
-for i in 1:5
-    push!(Q_slices, read(hfile["Q$i"]))
-end
-ensemble_size = read(hfile["ensemble_size"])
-close(hfile)
-
 
 
 #############################################
@@ -60,11 +50,13 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     ref_list = [x for x in 26:32]
     fig = Figure(resolution=(1200,800))
     ns = [1, 5, 9, 2, 6, 10]
+    # all_errors 
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
         ax = Axis(fig[i,j], title="$n")
         plot_evolution(n,n, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     end
+    ### select below instead for all 12 states
     # for i in 1:3, j in 1:4
     #     box = j+4*(i-1) 
     #     ax = Axis(fig[i,j], title="$box")
@@ -76,10 +68,11 @@ end
 
 plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta)
 
+# gives errors of 0.029391288674768482 for linear and 0.027833771539007426 for quadratic
 
 ##
 function kl_div(p, q; significance=nothing)
-    # for significance: integer indicating factor of sigma difference
+    # significance: integer indicating factor of sigma difference
     # p and q are passed in as two bayesian matrices
     m1, s1 = realize(p)
     m2, s2 = realize(q)
@@ -158,12 +151,9 @@ end
 
 plot_off_diagonal(sliding_reference, metrics;metrics_sig=metrics_sig, sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta)
 
+# gives errors of avg. 0.01807270209155247 for linear and 0.016877226649045382 for quadratic
 
-# a little experiment
-
-steady_state(generator(static_mc_dict[27])) # example of the reference values
-steady_state(generator(sliding_mc_dict[5][1]))
-
+####### Steady state
 function discrete_kl(p,q)
     #p and q each a series of numbers, implied as a function of index
     return sum([p[i]*log(p[i]/q[i]) for i in eachindex(p)])
@@ -171,32 +161,19 @@ end
 
 steady_states = [steady_state(generator(static_mc_dict[i])) for i in middle_values]
 
-for i in eachindex(sliding_mc_dict[6])
-    q = steady_state(generator(sliding_mc_dict[6][i]))
-    kls = [discrete_kl(p,q) for p in steady_states]
-    println(kls)
+# load in ensemble
+hfile = h5open("./data/lorenz-changing-ensemble.hdf5")
+Q_full = read(hfile["Q_full"]) #long matrix of full generators incl the 10e6 single-run first, then for all ensembl members
+Q_slices = [] #same here but for each window
+for i in 1:5
+    push!(Q_slices, read(hfile["Q$i"]))
 end
-
-begin
-    fig = Figure(resolution=(600,600))
-    ax = Axis(fig[1,1])
-    for i in eachindex(sliding_mc_dict[6])
-        q = steady_state(generator(sliding_mc_dict[6][i]))
-        kls = [discrete_kl(p,q) for p in steady_states]
-        lines!(middle_values, kls, label="$(middle_values[i])")
-    end
-    axislegend(ax, position=:lt)
-    # save("figs/steady_state_kl.png", fig)
-    fig
-end
-
-#### ensemble stuff
-
+ensemble_size = read(hfile["ensemble_size"])
+close(hfile)
 
 colors = [:red, :orange, :lightblue, :blue, :violet]
-
 begin
-    fig = Figure(resolution=(600,600))
+    fig = Figure(resolution=(700,700))
     ax = Axis(fig[1,1])
     for i in eachindex(sliding_mc_dict[6]) #it's just the five windows
         q = steady_state(Q_slices[i][:,1:12])
@@ -207,10 +184,10 @@ begin
         for j in 2:ensemble_size
             q = steady_state(Q_slices[i][:,((j-1)*12+1):(j*12)])
             kls = [discrete_kl(p,q) for p in steady_states]
-            lines!(middle_values, kls, color=(colors[i],0.25), linestyle=:dot)
+            lines!(middle_values, kls, color=(colors[i],0.1), linestyle=:dot)
         end
     end
     axislegend(ax, position=:lt)
-    # save("figs/steady_state_kl.png", fig)
+    save("figs/steady_state_kl.png", fig)
     fig
 end

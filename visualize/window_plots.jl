@@ -65,6 +65,7 @@ function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, mid
     end
     @info "printing errors for $n,$k"
     println(errors)
+    # return errors
 end
 
 

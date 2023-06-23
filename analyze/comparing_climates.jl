@@ -24,24 +24,26 @@ ht_32 = holding_times(mc32_ag, 3; dt=dt)
 
 begin
     fig = Figure(resolution=(1600, 1200))
-    lims = [(0,500), (0,500), (0,70)]
+    lims = [(0,1.2 ), (0,2), (0,0.2)]
     for i in 1:3
+        start, stop = lims[i]
+        bin_num=15
+        bin_width = (stop-start)/bin_num
         ax = Axis(fig[i,1], title="$i (ρ=26)") 
-        hist!(ax, ht_26[i], normalization=:probability,bins=15)
-        xlims!(lims[i][1], lims[i][2])
+        hist!(ax, ht_26[i], normalization=:probability,bins=start:bin_width:stop)
+        xlims!(start, stop)
         # ylims!(0, 0.4)
         #
         ax = Axis(fig[i,2], title="$i (ρ changing)") 
-        hist!(ax, ht_delta[i], normalization=:probability,bins=15)
-        xlims!(lims[i][1], lims[i][2])
+        hist!(ax, ht_delta[i], normalization=:probability,bins=bins=start:bin_width:stop)
+        xlims!(start, stop)
         # ylims!(0, 0.4)
         #
         ax = Axis(fig[i,3], title="$i (ρ=32)") 
-        hist!(ax, ht_32[i], normalization=:probability,bins=15)
-        xlims!(lims[i][1], lims[i][2])
+        hist!(ax, ht_32[i], normalization=:probability,bins=bins=start:bin_width:stop)
+        xlims!(start, stop)
         # ylims!(0, 0.4)
     end
     fig
+    save("figs/holding_time_histogram.png", fig)
 end
-
-

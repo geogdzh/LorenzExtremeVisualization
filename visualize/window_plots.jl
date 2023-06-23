@@ -1,4 +1,25 @@
-function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing)
+function get_means_stds(list_of_bayesians, n, k)
+    if n==k
+        means = [-1/(mean(list_of_bayesians[i])[n,k]) for i in eachindex(list_of_bayesians)]
+        stds = [(means[i]^2)*std(list_of_bayesians[i])[n,k] for i in eachindex(list_of_bayesians)] #according to error propagation
+    else
+        means = Float64[]
+        stds = Float64[]
+        for z in eachindex(list_of_bayesians)
+            gen = list_of_bayesians[z]
+            alpha_j = gen.posterior.exit_probabilities[n].alpha[k-1] #j-1 only works if looking at transitions into later states!
+            alpha_0 = sum(gen.posterior.exit_probabilities[n].alpha)
+            dist = Distributions.Beta(alpha_j, alpha_0 - alpha_j)
+            push!(means,mean(dist))
+            push!(stds, std(dist)) # this is all good bc we do just want to look at the exit probabilities
+        end 
+    end
+    return means, stds
+end
+
+
+
+function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing, ensemble_generators=nothing)
     #plot the static reference values of gen entries
     if n==k
         entry_list = [-1/(mean(static_ref[i])[n,k]) for i in eachindex(static_ref)] 
@@ -15,25 +36,11 @@ function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, mid
     scatter!(ref_list, entry_list, color=:black)
     
     if sliding_windows !== nothing
-        if n==k
-            sliding_means = [-1/(mean(sliding_windows[i])[n,k]) for i in eachindex(sliding_windows)]
-            sliding_stds = [(sliding_means[i]^2)*std(sliding_windows[i])[n,k] for i in eachindex(sliding_windows)] #according to error propagation
-        else
-            sliding_means = Float64[]
-            sliding_stds = Float64[]
-            for z in eachindex(sliding_windows)
-                gen = sliding_windows[z]
-                alpha_j = gen.posterior.exit_probabilities[n].alpha[k-1] #j-1 only works if looking at transitions into later states!
-                alpha_0 = sum(gen.posterior.exit_probabilities[n].alpha)
-                dist = Distributions.Beta(alpha_j, alpha_0 - alpha_j)
-                push!(sliding_means,mean(dist))
-                push!(sliding_stds, std(dist)) # this is all good bc we do just want to look at the exit probabilities
-            end 
-        end
+        sliding_means, sliding_stds = get_means_stds(sliding_windows, n, k)
         errorbars!(middle_values, sliding_means, sliding_stds.*2, color="red")
         shapes = [:star5, :circle, :star5, :circle, :star5]
         scatter!(middle_values, sliding_means, color="red", marker=shapes)
-        # ** need to fix this to have a normalization if it's off diagonal
+        # ** need to fix this to have a normalization if it's off diagonal !!!!
         f1 = [Polynomials.fit(middle_values[1:2:end], sliding_means[1:2:end], 1)[i] for i in 0:1]
         f2 = [Polynomials.fit(middle_values[1:2:end], sliding_means[1:2:end], 2)[i] for i in 0:2]
         xs = ref_list[1]:0.1:ref_list[end]
@@ -49,7 +56,7 @@ function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, mid
         end
     end
 
-    if bayesian_delta !== nothing
+    if bayesian_delta !== nothing #REFACTOR THIS with get_means_stds
         if n==k
             deltamean = -1/(mean(bayesian_delta)[n,k]) 
             deltastd = (deltamean^2)*std(bayesian_delta)[n,k]
@@ -63,6 +70,14 @@ function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, mid
         scatter!(29, deltamean, color="blue")
         errorbars!([29], [deltamean], [deltastd*2], color="blue")
     end
+
+    if !isnothing(ensemble_generators)
+        ensemble_means, ensemble_stds = get_means_stds(ensemble_generators, n, k)
+        ensemble_means = ensemble_means[1:5]
+        ensemble_stds = ensemble_stds[1:5]
+        band!(middle_values, ensemble_means .- ensemble_stds .* 2, ensemble_means .+ ensemble_stds .* 2, color=(:red, 0.3) )
+    end
+
     @info "printing errors for $n,$k"
     println(errors)
     # return errors

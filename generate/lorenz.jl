@@ -1,4 +1,5 @@
 include("./lorenz_embedding.jl")
+include("./generate_util.jl")
 
 function lorenz(x, ρ, σ, β)
     x1 = x[1]
@@ -65,31 +66,31 @@ for i in range(5,7)
     @info "done saving data for changing Lorenz at timesteps = 10^$i"
 end
 
-
+# ensemble portion
 begin
-    # @info "opening data"
+    @info "opening data"
     hfile = h5open(pwd() * "/data/lorenz-changing-10e6.hdf5")
     dt = read(hfile["dt"])
     mc = read(hfile["mc"])
     close(hfile)
-    generators = generator(mc; dt=dt)
 
-    Q_slices = [] #not the best way to do it
+    current_generators = []
+
     deltarho = Int64(floor(length(mc)/6))
     for j in range(0,4)
         mc_slice = mc[deltarho*j+1:deltarho*(j+2)]
-        gen = generator(mc_slice; dt=dt)
-        push!(Q_slices, gen)
+        gen = BayesianGenerator(mc_slice; dt=dt)
+        push!(current_generators, gen)
     end
+    push!(current_generators, BayesianGenerator(mc;dt=dt))
 
     hfile = h5open(pwd() * "/data/ensemble-members.hdf5")
-    intials = read(hfile["initials"])
+    initials = read(hfile["initials"])
     ensemble_size = read(hfile["ensemble_size"])
     close(hfile)
 
     for i in 1:ensemble_size
         init = initials[:,i]
-        # init = [14.0, 15.0, 27.0] .+ (i * 0.25 * (-1)^i)
         @info "generating data for ensemble member $i"
         x, dt = lorenz_data(;timesteps=10^6, Δt = 0.005, res=1, ϵ=0.0, ρ=t -> 26 + 6 * t / (10^6 * 0.005), init=init)
         @info "applying embedding"
@@ -97,23 +98,20 @@ begin
         for j in ProgressBar(eachindex(markov_indices))
             markov_indices[j] = embedding(x[:, j])
         end
-        gen = generator(markov_indices; dt=dt)
-        generators = [generators gen]
-        @info "splitting markov chain into windows"
+        
+        @info "splitting markov chain into windows and updating generators"
         deltarho = Int64(floor(length(markov_indices)/6))
         for j in range(0,4)
             mc_slice = markov_indices[deltarho*j+1:deltarho*(j+2)]
-            gen = generator(mc_slice; dt=dt)
-            Q_slices[j+1] = [Q_slices[j+1] gen]
+            current_generators[j+1] = BayesianGenerator(mc_slice, current_generators[j+1].posterior; dt=dt)
         end
+        current_generators[6] = BayesianGenerator(markov_indices, current_generators[6].posterior; dt=dt)
     end
+
     @info "saving data"
-    hfile = h5open(pwd() * "/data/lorenz-changing-ensemble.hdf5", "w")
-    hfile["Q_full"] = generators
-    for i in 1:5 #also feels unideal?
-        hfile["Q$i"] = Q_slices[i]
+    #ADD SMTH to automatically create the ensemble-generators folder
+    for i in 1:5 
+        save_Q_bayes(current_generators[i], "./data/ensemble-generators/Q$i.hdf5"; ensemble_size=ensemble_size, dt=dt) 
     end
-    hfile["dt"] = dt
-    hfile["ensemble_size"] = ensemble_size
-    close(hfile)
+    save_Q_bayes(current_generators[6], "./data/ensemble-generators/Q_full.hdf5"; ensemble_size=ensemble_size, dt=dt) 
 end

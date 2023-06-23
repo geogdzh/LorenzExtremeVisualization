@@ -6,6 +6,7 @@ using Distributions
 using HDF5
 using GLMakie
 include("./analyze_util.jl")
+include("../generate/generate_util.jl")
 # here I need all of the static sims and all of the changing rho ones
 
 # create dictionary of static environment markov chains
@@ -41,20 +42,31 @@ sliding_reference = [BayesianGenerator(static_mc_dict[ρ]; dt=dt) for ρ in 26:3
 mc_delta, dt = read_markov_chain("./data/lorenz-changing-10e" * string(6) * ".hdf5")
 bayesian_delta = BayesianGenerator(mc_delta; dt=dt)
 
+# load in ensemble
+ensemble_generators = [] 
+for i in 1:5
+    gen = load_Q_bayes("./data/ensemble-generators/Q$i.hdf5")
+    push!(ensemble_generators, gen)
+end
+push!(ensemble_generators, load_Q_bayes("./data/ensemble-generators/Q_full.hdf5"))
+
+hfile = h5open("./data/ensemble-generators/Q_full.hdf5")
+ensemble_size = read(hfile["ensemble_size"])
+close(hfile)
+
 
 #############################################
 
 include("../visualize/window_plots.jl") # load in plotting functions themselves
 
-function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing)
+function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing, ensemble_generators=nothing)
     ref_list = [x for x in 26:32]
     fig = Figure(resolution=(1200,800))
     ns = [1, 5, 9, 2, 6, 10]
-    # all_errors 
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
         ax = Axis(fig[i,j], title="$n")
-        plot_evolution(n,n, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
+        plot_evolution(n,n, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
     end
     ### select below instead for all 12 states
     # for i in 1:3, j in 1:4
@@ -63,10 +75,10 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     #     plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     # end
     fig
-    # save("figs/diagonal_evolution.png", fig)
+    # save("figs/diagonal_evolution_ensemble.png", fig)
 end
 
-plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta)
+plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
 
 # gives errors of 0.029391288674768482 for linear and 0.027833771539007426 for quadratic
 
@@ -128,7 +140,7 @@ plot_diag_kl(metrics; metrics_sig)
 
 ## off-diagonal entries
 
-function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing)
+function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing, ensemble_generators=nothing)
     fig = Figure(resolution=(800,800))
     colors = ["red", "orange", "green", "blue", "violet"]
     ref_list = [x for x in 26:32]
@@ -137,7 +149,7 @@ function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_win
     for n in eachindex(box_list)
         i, j = box_list[n]
         ax = Axis(fig[1,n], title="$i -> $j")
-        plot_evolution(i, j, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
+        plot_evolution(i, j, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
     end
     # plot kl div
     for n in eachindex(box_list)
@@ -145,11 +157,11 @@ function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_win
         ax = Axis(fig[2,n], title="$i -> $j")
         plot_kl(i,j,metrics;metrics_sig)
     end
-    # save("figs/off_diagonal_evolution.png", fig)
+    save("figs/off_diagonal_evolution_ensemble-100.png", fig)
     fig
 end
 
-plot_off_diagonal(sliding_reference, metrics;metrics_sig=metrics_sig, sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta)
+plot_off_diagonal(sliding_reference, metrics;metrics_sig=metrics_sig, sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
 
 # gives errors of avg. 0.01807270209155247 for linear and 0.016877226649045382 for quadratic
 
@@ -161,33 +173,23 @@ end
 
 steady_states = [steady_state(generator(static_mc_dict[i])) for i in middle_values]
 
-# load in ensemble
-hfile = h5open("./data/lorenz-changing-ensemble.hdf5")
-Q_full = read(hfile["Q_full"]) #long matrix of full generators incl the 10e6 single-run first, then for all ensembl members
-Q_slices = [] #same here but for each window
-for i in 1:5
-    push!(Q_slices, read(hfile["Q$i"]))
-end
-ensemble_size = read(hfile["ensemble_size"])
-close(hfile)
-
 colors = [:red, :orange, :lightblue, :blue, :violet]
 begin
     fig = Figure(resolution=(700,700))
     ax = Axis(fig[1,1])
     for i in eachindex(sliding_mc_dict[6]) #it's just the five windows
-        q = steady_state(Q_slices[i][:,1:12])
+        q = steady_state(sliding_bayesian_dict[6][i]) # this is for the original single-instance one
         kls = [discrete_kl(p,q) for p in steady_states]
         lines!(middle_values, kls, label="$(middle_values[i])", color=colors[i])
         scatter!(middle_values, kls, color=colors[i])
 
-        for j in 2:ensemble_size
-            q = steady_state(Q_slices[i][:,((j-1)*12+1):(j*12)])
+        for j in 2:ensemble_size # essentially need n generators for whatever the size of the ensemble is
+            q = steady_state(rand(ensemble_generators[i]))
             kls = [discrete_kl(p,q) for p in steady_states]
             lines!(middle_values, kls, color=(colors[i],0.1), linestyle=:dot)
         end
     end
     axislegend(ax, position=:lt)
-    save("figs/steady_state_kl.png", fig)
+    save("figs/steady_state_kl_updated.png", fig)
     fig
 end

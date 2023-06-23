@@ -1,6 +1,8 @@
 using LorenzExtremeVisualization, HDF5, Random, ProgressBars
 using MarkovChainHammer.TransitionMatrix: generator
 
+include("./lorenz.jl") #DOESNT WORK LIKE THIS
+
 #### generate ensemble initial conditions
 ensemble_size = 100
 

@@ -1,5 +1,5 @@
-# generate plot of mean holding times for sliding windows and KL div plot of the same
-using Polynomials
+# generate all plots deriving from sliding-window timeseries grouping
+# using Polynomials
 using MarkovChainHammer.BayesianMatrix
 using MarkovChainHammer.TransitionMatrix: steady_state, generator
 using Distributions
@@ -7,7 +7,6 @@ using HDF5
 using GLMakie
 include("./analyze_util.jl")
 include("../generate/generate_util.jl")
-# here I need all of the static sims and all of the changing rho ones
 
 # create dictionary of static environment markov chains
 dt = 0.0
@@ -65,8 +64,15 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     ns = [1, 5, 9, 2, 6, 10]
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
-        ax = Axis(fig[i,j], title="$n")
+        ax = Axis(fig[i,j], title="State $n", titlesize=22, ylabel=(j==1 ? "Mean holding time" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20)#, xticklabelsize=18, yticklabelsize=18)
         plot_evolution(n,n, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
+        if i == 1
+            hidexdecorations!(ax, grid=false)
+        end
+        if n == 1
+            axislegend(ax)
+        end
+
     end
     ### select below instead for all 12 states
     # for i in 1:3, j in 1:4
@@ -75,7 +81,7 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     #     plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     # end
     fig
-    # save("figs/diagonal_evolution_ensemble.png", fig)
+    save("figs/newest/diagonal_evolution_ensemble.png", fig)
 end
 
 plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
@@ -122,8 +128,14 @@ function plot_diag_kl(metrics; metrics_sig)
     ns = [1, 5, 9, 2, 6, 10]
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
-        ax = Axis(fig[i,j], title="$n")
+        ax = Axis(fig[i,j], title="State $n", ylabel=(j==1 ? "KL-div" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20)
         plot_kl(n, n, metrics; metrics_sig=metrics_sig)
+        if i == 1
+            hidexdecorations!(ax, grid=false)
+        end
+        if n == 1
+            axislegend(ax, position=:lt)
+        end
     end
     # fig = Figure(resolution=(3200,1200))
     # for i in 1:3, j in 1:4
@@ -132,7 +144,7 @@ function plot_diag_kl(metrics; metrics_sig)
     #     plot_kl(box, box, metrics; metrics_sig=metrics_sig)
     #     axislegend(ax, position=:lt)
     # end
-    # save("diagonal_kl.png", fig)
+    save("figs/newest/diagonal_kl.png", fig)
     fig
 end
             
@@ -148,16 +160,22 @@ function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_win
     # plot evolution
     for n in eachindex(box_list)
         i, j = box_list[n]
-        ax = Axis(fig[1,n], title="$i -> $j")
+        ax = Axis(fig[1,n], title="Transition $i -> $j",  ylabel=(n==1 ? "Mean holding time" : ""), ylabelsize=20, titlesize=20)
         plot_evolution(i, j, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
+        if n==2
+            axislegend(ax, position=:rb)
+        end
     end
     # plot kl div
     for n in eachindex(box_list)
         i, j = box_list[n]
-        ax = Axis(fig[2,n], title="$i -> $j")
+        ax = Axis(fig[2,n], title="Transition $i -> $j", ylabel=(n==1 ? "KL-div" : ""), ylabelsize=20, xlabel="ρ", xlabelsize=20, titlesize=20)
         plot_kl(i,j,metrics;metrics_sig)
+        if n==1
+            axislegend(ax, position=:lt)
+        end
     end
-    save("figs/off_diagonal_evolution_ensemble-100.png", fig)
+    save("figs/newest/off_diagonal_evolution_ensemble-100.png", fig)
     fig
 end
 
@@ -171,25 +189,27 @@ function discrete_kl(p,q)
     return sum([p[i]*log(p[i]/q[i]) for i in eachindex(p)])
 end
 
-steady_states = [steady_state(generator(static_mc_dict[i])) for i in middle_values]
+
+full_values = [26, middle_values...,32]
+steady_states = [steady_state(generator(static_mc_dict[i])) for i in full_values]
 
 colors = [:red, :orange, :lightblue, :blue, :violet]
 begin
-    fig = Figure(resolution=(700,700))
-    ax = Axis(fig[1,1])
+    fig = Figure(resolution=(600,600))
+    ax = Axis(fig[1,1], xlabel="ρ (reference)", ylabel="KL-div")
     for i in eachindex(sliding_mc_dict[6]) #it's just the five windows
         q = steady_state(sliding_bayesian_dict[6][i]) # this is for the original single-instance one
         kls = [discrete_kl(p,q) for p in steady_states]
-        lines!(middle_values, kls, label="$(middle_values[i])", color=colors[i])
-        scatter!(middle_values, kls, color=colors[i])
+        lines!(full_values, kls, label="$(middle_values[i]-1) - $(middle_values[i]+1)", color=colors[i])
+        scatter!(full_values, kls, color=colors[i])
 
         for j in 2:ensemble_size # essentially need n generators for whatever the size of the ensemble is
             q = steady_state(rand(ensemble_generators[i]))
             kls = [discrete_kl(p,q) for p in steady_states]
-            lines!(middle_values, kls, color=(colors[i],0.1), linestyle=:dot)
+            lines!(full_values, kls, color=(colors[i],0.1), linestyle=:dot)
         end
     end
-    axislegend(ax, position=:lt)
-    save("figs/steady_state_kl_updated.png", fig)
+    axislegend("Average over ρ=", position=:ct)
+    save("figs/newest/steady_state_kl_updated.png", fig)
     fig
 end

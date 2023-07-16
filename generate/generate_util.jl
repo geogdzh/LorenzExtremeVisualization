@@ -1,4 +1,3 @@
-using HDF5
 include("./lorenz_embedding.jl")
 
 function lorenz(x, ρ, σ, β)

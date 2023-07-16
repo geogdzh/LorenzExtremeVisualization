@@ -75,7 +75,7 @@ function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, mid
         ensemble_means, ensemble_stds = get_means_stds(ensemble_generators, n, k)
         ensemble_means = ensemble_means[1:5]
         ensemble_stds = ensemble_stds[1:5]
-        band!(middle_values, ensemble_means .- ensemble_stds .* 2, ensemble_means .+ ensemble_stds .* 2, color=(:red, 0.3) , label="ensemble range")
+        band!(middle_values, ensemble_means .- ensemble_stds .* 2, ensemble_means .+ ensemble_stds .* 2, color=(:red, 0.3) , label="ensemble 2σ")
     end
 
     # @info "printing errors for $n,$k"

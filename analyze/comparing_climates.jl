@@ -38,11 +38,11 @@ close(hfile)
 
 begin
     fig = Figure(resolution=(1600, 1200))
-    xlims = [(0,1.2 ), (0,0.599), (0,0.19)]
+    xlims = [(0,1.2), (0,0.6), (0,0.2)]
     ylims = [(0,0.15), (0,0.3), (0,0.15)]
     for i in 1:3
         start, stop = xlims[i]
-        bin_num= (i==2 ? 40 : 40)
+        bin_num= 39 #(i==2 ? 40 : 40)
         bin_width = (stop-start)/bin_num
         kwargs = (; xlabel=(i==3 ? "Holding time" : ""), titlesize=22, ylabelsize=20, xlabelsize=20, yticklabelsize=18, xticklabelsize=18)
         ax = Axis(fig[i,1], title="State $i (ρ=26)", ylabel="Probability"; kwargs...) 

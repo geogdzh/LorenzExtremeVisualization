@@ -84,7 +84,7 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     save("figs/newest/diagonal_evolution_ensemble.png", fig)
 end
 
-plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
+plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, ensemble_generators=ensemble_generators) #bayesian_delta=bayesian_delta
 
 # gives errors of 0.029391288674768482 for linear and 0.027833771539007426 for quadratic
 
@@ -126,9 +126,10 @@ metrics, metrics_sig = get_metrics([sliding_bayesian_dict[i] for i in 5:7]; sign
 function plot_diag_kl(metrics; metrics_sig)
     fig = Figure(resolution=(1200,800))
     ns = [1, 5, 9, 2, 6, 10]
+    xticks = ["(27,29)", "(28,30)", "(29,31)", "(30,32)"]
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
-        ax = Axis(fig[i,j], title="State $n", ylabel=(j==1 ? "KL-div" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20)
+        ax = Axis(fig[i,j], title="State $n", ylabel=(j==1 ? "KL-div" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20, xticks=(28:31, xticks))
         plot_kl(n, n, metrics; metrics_sig=metrics_sig)
         if i == 1
             hidexdecorations!(ax, grid=false)
@@ -157,10 +158,11 @@ function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_win
     colors = ["red", "orange", "green", "blue", "violet"]
     ref_list = [x for x in 26:32]
     box_list = [(5,9), (8,12)]
+    xticks = ["(27,29)", "(28,30)", "(29,31)", "(30,32)"]
     # plot evolution
     for n in eachindex(box_list)
         i, j = box_list[n]
-        ax = Axis(fig[1,n], title="Transition $i -> $j",  ylabel=(n==1 ? "Mean holding time" : ""), ylabelsize=20, titlesize=20)
+        ax = Axis(fig[1,n], title="Transition $i -> $j",  ylabel=(n==1 ? "Exit probability" : ""), ylabelsize=20, titlesize=20)
         plot_evolution(i, j, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
         if n==2
             axislegend(ax, position=:rb)
@@ -169,7 +171,7 @@ function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_win
     # plot kl div
     for n in eachindex(box_list)
         i, j = box_list[n]
-        ax = Axis(fig[2,n], title="Transition $i -> $j", ylabel=(n==1 ? "KL-div" : ""), ylabelsize=20, xlabel="ρ", xlabelsize=20, titlesize=20)
+        ax = Axis(fig[2,n], title="Transition $i -> $j", ylabel=(n==1 ? "KL-div" : ""), ylabelsize=20, xlabel="ρ", xlabelsize=20, titlesize=20, xticks=(28:31, xticks))
         plot_kl(i,j,metrics;metrics_sig)
         if n==1
             axislegend(ax, position=:lt)
@@ -179,7 +181,7 @@ function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_win
     fig
 end
 
-plot_off_diagonal(sliding_reference, metrics;metrics_sig=metrics_sig, sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
+plot_off_diagonal(sliding_reference, metrics;metrics_sig=metrics_sig, sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values,  ensemble_generators=ensemble_generators) #bayesian_delta=bayesian_delta,
 
 # gives errors of avg. 0.01807270209155247 for linear and 0.016877226649045382 for quadratic
 

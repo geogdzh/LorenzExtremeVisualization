@@ -1,11 +1,10 @@
 using HDF5, LorenzExtremeVisualization
 using MarkovChainHammer.TransitionMatrix: holding_times
 
-
 include("generate_util.jl")
 include("../analyze/analyze_util.jl")
 
-#generate extra long static ref
+#generate holding times from extra long static reference runs
 
 for ρₛ in [26, 32]
     @info "generating data for static Lorenz ρ=$ρₛ"
@@ -28,7 +27,7 @@ for ρₛ in [26, 32]
     @info "done saving holding times for static Lorenz ρ=$ρₛ"
 end
 
-#now the ensemble
+#now from the the ensemble
 begin
     @info "opening data"
     hfile = h5open(pwd() * "/data/lorenz-changing-10e6.hdf5")

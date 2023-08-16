@@ -81,7 +81,7 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     #     plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     # end
     fig
-    save("figs/newest/diagonal_evolution_ensemble.png", fig)
+    save("figs/diagonal_evolution_ensemble.png", fig)
 end
 
 plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, ensemble_generators=ensemble_generators) #bayesian_delta=bayesian_delta
@@ -145,7 +145,7 @@ function plot_diag_kl(metrics; metrics_sig)
     #     plot_kl(box, box, metrics; metrics_sig=metrics_sig)
     #     axislegend(ax, position=:lt)
     # end
-    save("figs/newest/diagonal_kl.png", fig)
+    save("figs/diagonal_kl.png", fig)
     fig
 end
             
@@ -197,8 +197,8 @@ steady_states = [steady_state(generator(static_mc_dict[i])) for i in full_values
 
 colors = [:red, :orange, :lightblue, :blue, :violet]
 begin
-    fig = Figure(resolution=(600,600))
-    ax = Axis(fig[1,1], xlabel="ρ (reference)", ylabel="KL-div")
+    fig = Figure(resolution=(800,600))
+    ax = Axis(fig[1,1], xlabel="ρ (reference)", ylabel="KL-div")#, ylabelsize=26, xlabelsize=26, xticklabelsize=20, yticklabelsize=20)
     for i in eachindex(sliding_mc_dict[6]) #it's just the five windows
         q = steady_state(sliding_bayesian_dict[6][i]) # this is for the original single-instance one
         kls = [discrete_kl(p,q) for p in steady_states]
@@ -211,7 +211,7 @@ begin
             lines!(full_values, kls, color=(colors[i],0.1), linestyle=:dot)
         end
     end
-    axislegend("Average over ρ=", position=:ct)
-    save("figs/newest/steady_state_kl_updated.png", fig)
+    axislegend("Average over ρ=", position=:ct)#, labelsize=20, titlesize=26)
+    save("figs/steady_state_kl_big.png", fig)
     fig
 end

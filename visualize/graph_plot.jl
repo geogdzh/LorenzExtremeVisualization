@@ -4,14 +4,23 @@ using MarkovChainHammer.TransitionMatrix: steady_state
 using MarkovChainHammer.TransitionMatrix: perron_frobenius
 using SparseArrays, Graphs, GraphMakie, Printf
 ##
-include(pwd() * "/analyze/analyze_util.jl")
+include("../analyze/analyze_util.jl")
 
 mc, dt, x = read_markov_chain("data/lorenz26.hdf5"; include_x=true)
 mc26 = aggregate(mc)
 mc, dt, x = read_markov_chain("data/lorenz32.hdf5"; include_x=true)
 mc32 = aggregate(mc)
 
-##
+
+gen26 = generator(mc26; dt=dt)
+gen32 = generator(mc32; dt=dt)
+
+# generate numerical matrices being shown in paper
+using Latexify
+latexify(round.(gen26, digits=3))
+latexify(round.(gen32, digits=3))
+
+## generate two side by side graph network plots, for each of the matrices
 
 function edge_graph(ax, mc)
     Q = mean(BayesianGenerator(mc; dt = dt))
@@ -72,5 +81,5 @@ edge_graph(ax_32, mc32)
 # scatter!(ax_new, x[1, inds], x[2, inds], x[3, inds], color=colors[inds], markersize=20.0, markerspacing=0.1, markerstrokewidth=0.0)
 # rotate_cam!(ax_new.scene, (0.0, -10.5, 0.0))
 
-save("figs/newest/three-state-network-comparison.png", fig)
+save("figs/three-state-network-comparison.png", fig)
 display(fig)

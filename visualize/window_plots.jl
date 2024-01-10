@@ -86,14 +86,15 @@ end
 
 function plot_kl(n, k, metrics; metrics_sig)
     colors = ["red", "orange", "blue"]
-    labels = ["10e5", "10e6", "10e7"]
+    # labels = ["10e5", "10e6", "10e7"]
+    labels = ["10e-2", "10e-3", "10e-4"]
     xs = [x for x in 28:31]
     for list_no in eachindex(metrics) #iterate 1e6 through 1e4
         #all same color + label
         tmp = Float64[]
         marker_shapes = []
         for m in 1:4
-            push!(tmp, metrics[list_no][m][n,k])
+            push!(tmp, abs.(metrics[list_no][m][n,k]))
             if metrics_sig[list_no][m][n,k] 
                 push!(marker_shapes, :circle) #o
             else

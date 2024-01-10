@@ -1,7 +1,8 @@
 using HDF5, GLMakie, LinearAlgebra, Statistics, Random
 using MarkovChainHammer.BayesianMatrix
 using MarkovChainHammer.TransitionMatrix: steady_state
-using MarkovChainHammer.TransitionMatrix: perron_frobenius
+using MarkovChainHammer.TransitionMatrix: perron_frobenius, holding_times
+using MarkovChainHammer.TransitionMatrix
 using SparseArrays, Graphs, GraphMakie, Printf
 ##
 include("../analyze/analyze_util.jl")
@@ -29,8 +30,9 @@ function edge_graph(ax, mc)
     Q_prim = zeros(size(Q))
     for i in 1:size(Q)[1]
         Q_prim[:, i] .= -Q[:, i] / Q[i, i]
-        Q_prim[i, i] = -1 / Q[i, i]
+        Q_prim[i, i] = 0.#-1 / Q[i, i] #cahnged to zero to hide self-loops
     end
+    hts = [round(-1 / Q[i, i], digits=3) for i in 1:3]
 
     elabels = string.([round(Q_prim[i]; digits=2) for i in 1:ne(g_Q)])
     # [@sprintf("%.0e", node_labels[i]) for i in 1:nv(G)]
@@ -48,7 +50,7 @@ function edge_graph(ax, mc)
 
     edge_width_Q = [10.0 for i in 1:ne(g_Q)]
     arrow_size_Q = [40.0 for i in 1:ne(g_Q)]
-    node_labels_Q = ["\nState 1\n(non-extreme)", "State 2   \n(intermediate)   ", "State 3\n(extreme)\n "]#repr.(1:nv(g_Q))
+    node_labels_Q = ["A (normal)   \n ht=$(hts[1])   ", "B (medium)   \n ht=$(hts[2])   ", "C (high)  \n ht=$(hts[3])  "]#repr.(1:nv(g_Q))
     nlabels_align = [(:right,:top), (:right,:center), (:right,:bottom)]
 
     #                   ; edge_color=edge_color_Q, edge_width=edge_width_Q
@@ -81,5 +83,5 @@ edge_graph(ax_32, mc32)
 # scatter!(ax_new, x[1, inds], x[2, inds], x[3, inds], color=colors[inds], markersize=20.0, markerspacing=0.1, markerstrokewidth=0.0)
 # rotate_cam!(ax_new.scene, (0.0, -10.5, 0.0))
 
-save("figs/three-state-network-comparison.png", fig)
+save("figs/three-state-network-comparison-new.png", fig)
 display(fig)

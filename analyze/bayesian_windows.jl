@@ -47,7 +47,7 @@ for i in 1:5
     gen = load_Q_bayes("./data/ensemble-generators/Q$i.hdf5")
     push!(ensemble_generators, gen)
 end
-push!(ensemble_generators, load_Q_bayes("./data/ensemble-generators/Q_full.hdf5"))
+push!(ensemble_generators, load_Q_bayes("./data/ensemble-generators/Q_full.hdf5")) #last one is the full one
 
 hfile = h5open("./data/ensemble-generators/Q_full.hdf5")
 ensemble_size = read(hfile["ensemble_size"])
@@ -81,7 +81,7 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     #     plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     # end
     fig
-    save("figs/diagonal_evolution_ensemble.png", fig)
+    # save("figs/diagonal_evolution_ensemble.png", fig)
 end
 
 plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, ensemble_generators=ensemble_generators) #bayesian_delta=bayesian_delta
@@ -129,13 +129,14 @@ function plot_diag_kl(metrics; metrics_sig)
     xticks = ["(27,29)", "(28,30)", "(29,31)", "(30,32)"]
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
-        ax = Axis(fig[i,j], title="State $n", ylabel=(j==1 ? "KL-div" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20, xticks=(28:31, xticks))
+        ax = Axis(fig[i,j], title="State $n", ylabel=(j==1 ? "D" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20, xticks=(28:31, xticks), yscale=log10)
+        ylims!(ax,(10^-2.5,1e3))
         plot_kl(n, n, metrics; metrics_sig=metrics_sig)
         if i == 1
             hidexdecorations!(ax, grid=false)
         end
         if n == 1
-            axislegend(ax, position=:lt)
+            axislegend(ax, position=:lb)
         end
     end
     # fig = Figure(resolution=(3200,1200))
@@ -145,7 +146,7 @@ function plot_diag_kl(metrics; metrics_sig)
     #     plot_kl(box, box, metrics; metrics_sig=metrics_sig)
     #     axislegend(ax, position=:lt)
     # end
-    save("figs/diagonal_kl.png", fig)
+    save("figs/diagonal_kl-updated.png", fig)
     fig
 end
             
@@ -154,30 +155,31 @@ plot_diag_kl(metrics; metrics_sig)
 ## off-diagonal entries
 
 function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_windows=nothing, middle_values=nothing, bayesian_delta=nothing, ensemble_generators=nothing)
-    fig = Figure(resolution=(800,800))
+    fig = Figure(resolution=(800,400))
     colors = ["red", "orange", "green", "blue", "violet"]
     ref_list = [x for x in 26:32]
-    box_list = [(5,9), (8,12)]
+    box_list =  [(5,9)] #[(5,9), (8,12)]
     xticks = ["(27,29)", "(28,30)", "(29,31)", "(30,32)"]
     # plot evolution
     for n in eachindex(box_list)
         i, j = box_list[n]
-        ax = Axis(fig[1,n], title="Transition $i -> $j",  ylabel=(n==1 ? "Exit probability" : ""), ylabelsize=20, titlesize=20)
+        ax = Axis(fig[n,1], title="Transition $i -> $j",  ylabel=(n==1 ? "Exit probability" : ""), ylabelsize=20, titlesize=20, xlabel="ρ", xlabelsize=20)
         plot_evolution(i, j, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
-        if n==2
+        if n==1
             axislegend(ax, position=:rb)
         end
     end
     # plot kl div
     for n in eachindex(box_list)
         i, j = box_list[n]
-        ax = Axis(fig[2,n], title="Transition $i -> $j", ylabel=(n==1 ? "KL-div" : ""), ylabelsize=20, xlabel="ρ", xlabelsize=20, titlesize=20, xticks=(28:31, xticks))
+        ax = Axis(fig[n,2], title="Transition $i -> $j", ylabel=(n==1 ? "D" : ""), ylabelsize=20, xlabel="ρ", xlabelsize=20, titlesize=20, xticks=(28:31, xticks), yscale=log10)
+        ylims!(ax,(10^-2.5,1e3))
         plot_kl(i,j,metrics;metrics_sig)
         if n==1
-            axislegend(ax, position=:lt)
+            axislegend(ax, position=:lb)
         end
     end
-    save("figs/newest/off_diagonal_evolution_ensemble-100.png", fig)
+    save("figs/newest/off_diagonal_evolution_ensemble-100-updated.png", fig)
     fig
 end
 
@@ -198,7 +200,19 @@ steady_states = [steady_state(generator(static_mc_dict[i])) for i in full_values
 colors = [:red, :orange, :lightblue, :blue, :violet]
 begin
     fig = Figure(resolution=(800,600))
-    ax = Axis(fig[1,1], xlabel="ρ (reference)", ylabel="KL-div")#, ylabelsize=26, xlabelsize=26, xticklabelsize=20, yticklabelsize=20)
+    ax = Axis(fig[1,1], xlabel="ρ (reference)", ylabel="D")#, ylabelsize=26, xlabelsize=26, xticklabelsize=20, yticklabelsize=20)
+
+    #now for the full one
+    q = steady_state(bayesian_delta)
+    kls = [discrete_kl(p,q) for p in steady_states]
+    lines!(full_values, kls, label="full 26-32", color=:black)
+    scatter!(full_values, kls, color=:black)
+    for j in 2:ensemble_size
+        q = steady_state(rand(ensemble_generators[6]))
+        kls = [discrete_kl(p,q) for p in steady_states]
+        lines!(full_values, kls, color=(:black,0.1), linestyle=:dot)
+    end
+
     for i in eachindex(sliding_mc_dict[6]) #it's just the five windows
         q = steady_state(sliding_bayesian_dict[6][i]) # this is for the original single-instance one
         kls = [discrete_kl(p,q) for p in steady_states]
@@ -211,7 +225,9 @@ begin
             lines!(full_values, kls, color=(colors[i],0.1), linestyle=:dot)
         end
     end
+
+
     axislegend("Average over ρ=", position=:ct)#, labelsize=20, titlesize=26)
-    save("figs/steady_state_kl_big.png", fig)
+    save("figs/steady_state_kl_aug.png", fig)
     fig
 end

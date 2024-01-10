@@ -13,9 +13,14 @@ nsteps = 2100
 tlist = collect(0:dt:dt*(length(x)-1))
 color_choices = ["blue", "violet", "red"]
 colorlist = [color_choices[mc28_ag[i]] for i in 1:nsteps]
+
 fig = Figure(resolution=(1000, 500))
 ax = Axis(fig[1, 1]; xlabel="Time", ylabel="z")
 scatter!(ax, tlist[1:nsteps], z[1:nsteps], color=colorlist)
+elem_1 = [MarkerElement(color=:blue, marker=:circle, markersize=12)]
+elem_2 = [MarkerElement(color=:violet, marker=:circle, markersize=12)]
+elem_3 = [MarkerElement(color=:red, marker=:circle, markersize=12)]
+axislegend(ax, [elem_1, elem_2, elem_3], ["A", "B", "C"], position=:lt)
 save("figs/z_trajectory.png", fig)
 fig
 

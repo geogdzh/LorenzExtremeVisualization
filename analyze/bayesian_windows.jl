@@ -1,7 +1,7 @@
 # generate all plots deriving from sliding-window timeseries grouping
 # using Polynomials
 using MarkovChainHammer.BayesianMatrix
-using MarkovChainHammer.TransitionMatrix: steady_state, generator
+using MarkovChainHammer.TransitionMatrix: generator#steady_state, generator
 using Distributions
 using HDF5
 using GLMakie
@@ -146,7 +146,7 @@ function plot_diag_kl(metrics; metrics_sig)
     #     plot_kl(box, box, metrics; metrics_sig=metrics_sig)
     #     axislegend(ax, position=:lt)
     # end
-    save("figs/diagonal_kl-updated.png", fig)
+    # save("figs/diagonal_kl-updated.png", fig)
     fig
 end
             

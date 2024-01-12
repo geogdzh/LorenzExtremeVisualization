@@ -1,7 +1,8 @@
-using HDF5, GLMakie, LinearAlgebra, Statistics, Random, ProgressBars
-using MarkovChainHammer.BayesianMatrix
-using MarkovChainHammer.TransitionMatrix: steady_state, holding_times
-using MarkovChainHammer.TransitionMatrix: perron_frobenius, generator
+# using HDF5, GLMakie, LinearAlgebra, Statistics, Random, ProgressBars
+# using MarkovChainHammer.BayesianMatrix
+# using MarkovChainHammer.TransitionMatrix: steady_state, holding_times
+# using MarkovChainHammer.TransitionMatrix: perron_frobenius, generator
+using Random
 Random.seed!(12345)
 
 ##

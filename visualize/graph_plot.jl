@@ -1,8 +1,8 @@
 using HDF5, GLMakie, LinearAlgebra, Statistics, Random
-using MarkovChainHammer.BayesianMatrix
-using MarkovChainHammer.TransitionMatrix: steady_state
-using MarkovChainHammer.TransitionMatrix: perron_frobenius, holding_times
-using MarkovChainHammer.TransitionMatrix
+# using MarkovChainHammer.BayesianMatrix
+# using MarkovChainHammer.TransitionMatrix: steady_state
+# using MarkovChainHammer.TransitionMatrix: perron_frobenius
+using MarkovChainHammer
 using SparseArrays, Graphs, GraphMakie, Printf
 ##
 include("../analyze/analyze_util.jl")
@@ -19,6 +19,9 @@ gen32 = generator(mc32; dt=dt)
 # generate numerical matrices being shown in paper
 using Latexify
 latexify(round.(gen26, digits=3))
+e,r = exit_rate(gen32)
+latexify(round.(e, digits=3))
+latexify(round.(r, digits=3))
 latexify(round.(gen32, digits=3))
 
 ## generate two side by side graph network plots, for each of the matrices

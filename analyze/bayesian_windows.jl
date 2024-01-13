@@ -81,12 +81,10 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     #     plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     # end
     fig
-    # save("figs/diagonal_evolution_ensemble.png", fig)
+    save("figs/diagonal_evolution_ensemble.png", fig)
 end
 
 plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, ensemble_generators=ensemble_generators) #bayesian_delta=bayesian_delta
-
-# gives errors of 0.029391288674768482 for linear and 0.027833771539007426 for quadratic
 
 ##
 function kl_div(p, q; significance=nothing)

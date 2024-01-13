@@ -3,7 +3,7 @@ include("./generate_util.jl")
 #generate static lorenz
 for (i, ρₛ) in enumerate(range(26, 32)) 
     @info "generating data for static Lorenz ρ=$ρₛ"
-    x, dt = lorenz_data(;timesteps=10^7, Δt = 0.005, res=1, ϵ=0.0, ρ=t -> ρₛ + 0 * t / (10^7 * 0.005))
+    x, dt = lorenz_data(;timesteps=10^8, Δt = 0.005, res=1, ϵ=0.0, ρ=t -> ρₛ + 0 * t / (10^8 * 0.005)) #rerun!!
     @info "applying embedding"
     markov_indices = zeros(Int, size(x,2))
     for i in ProgressBar(eachindex(markov_indices))

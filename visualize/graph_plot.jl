@@ -17,12 +17,15 @@ gen26 = generator(mc26; dt=dt)
 gen32 = generator(mc32; dt=dt)
 
 # generate numerical matrices being shown in paper
-using Latexify
-latexify(round.(gen26, digits=3))
+using Latexify, LaTeXStrings
+latexify(round.(gen26, digits=2))
+e,r = exit_rate(gen26)
+latexify(round.(e, digits=2))
+latexify(round.(1 ./ r, digits=2))
+latexify(round.(gen32, digits=2))
 e,r = exit_rate(gen32)
-latexify(round.(e, digits=3))
-latexify(round.(r, digits=3))
-latexify(round.(gen32, digits=3))
+latexify(round.(e, digits=2))
+latexify(round.(1 ./ r, digits=2))
 
 ## generate two side by side graph network plots, for each of the matrices
 
@@ -47,14 +50,15 @@ function edge_graph(ax, mc)
     # node_color = [(cgrad(colormap)[i]) for i in 1:nv(g_Q)]
     node_color = [(colors[i]) for i in 1:nv(g_Q)]
     edge_attr = (; linestyle=[:dot, :dash, :dash, :dash, :dot, :dash, :dash, :dash, :dot])
-    elabels_fontsize = 40
+    elabels_fontsize = 28
     nlabels_fontsize = 36
     node_size = 80.0
 
     edge_width_Q = [10.0 for i in 1:ne(g_Q)]
     arrow_size_Q = [40.0 for i in 1:ne(g_Q)]
-    node_labels_Q = ["A (normal)   \n ht=$(hts[1])   ", "B (medium)   \n ht=$(hts[2])   ", "C (high)  \n ht=$(hts[3])  "]#repr.(1:nv(g_Q))
-    nlabels_align = [(:right,:top), (:right,:center), (:right,:bottom)]
+    # node_labels_Q = [L"A (normal)   \newline $<T_A>=%$(hts[1])$   ", L"B (medium)   \n $<T_B>=%$(hts[2])$   ", L"C (high)  \n $<T_C>=%$(hts[3])$  "]#repr.(1:nv(g_Q))
+    node_labels_Q = [L"<T_A>=%$(hts[1])   ", L"$<T_B>=%$(hts[2])$   ", L"$<T_C>=%$(hts[3])$  "]#repr.(1:nv(g_Q))
+    nlabels_align = [(:right,:bottom), (:right,:center), (:right,:bottom)]
 
     #                   ; edge_color=edge_color_Q, edge_width=edge_width_Q
     kwargs_edges = (; elabels=elabels, elabels_color=elabels_color, elabels_fontsize=elabels_fontsize, edge_color=edge_color_Q, edge_width=edge_width_Q)
@@ -68,7 +72,7 @@ function edge_graph(ax, mc)
 end
 
 
-fig = Figure(resolution=(2000, 1000))
+fig = Figure(resolution=(2000, 750))
 colors = ["blue", "violet", "red"]
 
 ax_26 = Axis(fig[1, 1]; title="ρ=26", titlesize=40)
@@ -86,5 +90,5 @@ edge_graph(ax_32, mc32)
 # scatter!(ax_new, x[1, inds], x[2, inds], x[3, inds], color=colors[inds], markersize=20.0, markerspacing=0.1, markerstrokewidth=0.0)
 # rotate_cam!(ax_new.scene, (0.0, -10.5, 0.0))
 
-save("figs/three-state-network-comparison-new.png", fig)
+save("figs/three-state-network-comparison-newest.png", fig)
 display(fig)

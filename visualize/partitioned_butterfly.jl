@@ -10,21 +10,23 @@ mc32, dt, x32 = read_markov_chain("./data/lorenz32.hdf5"; include_x=true)
 # create colors for the plot
 # non-custom, see https://docs.juliaplots.org/latest/generated/colorschemes/
 # color_choices = cgrad(:rainbow, 12, categorical=true) # 12 is the number of states
-colormap = :Paired_12
-# color_choices = [:yellow, :darkgrey, :lightgrey, :pink ,:blue, :lightblue, :lightgreen, :green ,:red, :magenta , :purple, :orange]
-color_choices = [cgrad(colormap)[i] for i in 1:12]
+# colormap = :Paired_12
+color_choices = [:yellow, :darkgrey, :lightgrey, :magenta ,:blue, :cyan, :lightgreen, :green ,:lightblue, :red , :purple, :orange]
+# color_choices = [cgrad(colormap)[i] for i in 1:12]
 
 colors26 = []
-for i in eachindex(mc26)
+for i in 1000:Int(10e6) #eachindex(mc26)
     push!(colors26, color_choices[mc26[i]])
 end
-tuple_timeseries_26 = [(x26[1, i], x26[2, i], x26[3, i]) for i in 1:size(x26, 2)]
+# tuple_timeseries_26 = [(x26[1, i], x26[2, i], x26[3, i]) for i in 1:size(x26, 2)]
+tuple_timeseries_26 = [(x26[1, i], x26[2, i], x26[3, i]) for i in 1000:Int(10e6)]
 
 colors32 = []
-for i in eachindex(mc32)
+for i in 1000:Int(10e6)#eachindex(mc32)
     push!(colors32, color_choices[mc32[i]])
 end
-tuple_timeseries_32 = [(x32[1, i], x32[2, i]+60, x32[3, i]) for i in 1:size(x32, 2)]
+# tuple_timeseries_32 = [(x32[1, i], x32[2, i]+60, x32[3, i]) for i in 1:size(x32, 2)]
+tuple_timeseries_32 = [(x32[1, i], x32[2, i]+60, x32[3, i]) for i in 1000:Int(10e6)]
 
 # colorsdelta = []
 # for i in eachindex(mcdelta)

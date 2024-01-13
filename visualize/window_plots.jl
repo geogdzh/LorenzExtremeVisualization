@@ -1,3 +1,5 @@
+using LaTeXStrings
+
 function get_means_stds(list_of_bayesians, n, k)
     if n==k
         means = [-1/(mean(list_of_bayesians[i])[n,k]) for i in eachindex(list_of_bayesians)]
@@ -39,7 +41,7 @@ function plot_evolution(n, k, ref_list, static_ref; sliding_windows=nothing, mid
         sliding_means, sliding_stds = get_means_stds(sliding_windows, n, k)
         errorbars!(middle_values, sliding_means, sliding_stds.*2, color="red")
         # shapes = [:star5, :circle, :star5, :circle, :star5]
-        scatter!(middle_values, sliding_means, color="red", label="2ρ window avg.")#, marker=shapes)
+        scatter!(middle_values, sliding_means, color="red", label="window avg.")#, marker=shapes)
         # f1 = [Polynomials.fit(middle_values[1:2:end], sliding_means[1:2:end], 1)[i] for i in 0:1]
         # f2 = [Polynomials.fit(middle_values[1:2:end], sliding_means[1:2:end], 2)[i] for i in 0:2]
         # xs = ref_list[1]:0.1:ref_list[end]
@@ -87,6 +89,7 @@ end
 function plot_kl(n, k, metrics; metrics_sig)
     colors = ["red", "orange", "blue"]
     # labels = ["10e5", "10e6", "10e7"]
+    # labels = [L"$\dot \rho = 10^{-2}$", "10e-3", "10e-4"]
     labels = ["10e-2", "10e-3", "10e-4"]
     xs = [x for x in 28:31]
     for list_no in eachindex(metrics) #iterate 1e6 through 1e4

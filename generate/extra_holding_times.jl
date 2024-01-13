@@ -4,7 +4,7 @@ using MarkovChainHammer.TransitionMatrix: holding_times
 include("generate_util.jl")
 include("../analyze/analyze_util.jl")
 
-#generate holding times from extra long static reference runs
+#generate holding times from extra long static reference runs: 10^8 timesteps (this is now the same as the references used)
 
 for ρₛ in [26, 32]
     @info "generating data for static Lorenz ρ=$ρₛ"
@@ -27,7 +27,7 @@ for ρₛ in [26, 32]
     @info "done saving holding times for static Lorenz ρ=$ρₛ"
 end
 
-#now from the the ensemble
+#now from the the ensemble: 10^6 timesteps
 begin
     @info "opening data"
     hfile = h5open(pwd() * "/data/lorenz-changing-10e6.hdf5")

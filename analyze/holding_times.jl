@@ -37,23 +37,25 @@ begin
     fig = Figure(resolution=(1600, 1200))
     xlims = [(0,1.2), (0,0.6), (0,0.2)]
     ylims = [(0,0.15), (0,0.3), (0,0.15)]
+    states = ["A", "B", "C"]
+    xlabels = [([0.0, 0.5, 1.0], ["0.0", "0.5", "1.0"]), ([0.0, 0.1, 0.2, 0.3, 0.4, 0.5], ["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"]), ([0.0, 0.05, 0.1, 0.15], ["0.0", "0.05", "0.1", "0.15"])]
     for i in 1:3
         start, stop = xlims[i]
         bin_num= 39 #(i==2 ? 40 : 40)
         bin_width = (stop-start)/bin_num
-        kwargs = (; xlabel=(i==3 ? "Holding time" : ""), titlesize=22, ylabelsize=20, xlabelsize=20, yticklabelsize=18, xticklabelsize=18)
-        ax = Axis(fig[i,1], title="State $i (ρ=26)", ylabel="Probability"; kwargs...) 
+        kwargs = (; xlabel=(i==3 ? "Holding time" : ""), titlesize=22, ylabelsize=20, xlabelsize=20, yticklabelsize=18, xticklabelsize=18, xticks = xlabels[i])
+        ax = Axis(fig[i,1], title="Macrostate $(states[i]) (ρ=26)", ylabel="Probability"; kwargs...) 
         hist!(ax, ht_26[i], normalization=:probability,bins=start:bin_width:stop)
         xlims!(start, stop)
         ylims!(ylims[i]...)
         #
-        ax = Axis(fig[i,2], title="State $i (ρ changing)"; kwargs...) 
+        ax = Axis(fig[i,2], title="Macrostate $(states[i]) (ρ changing)"; kwargs...) 
         hist!(ax, ht_delta[i], normalization=:probability,bins=bins=start:bin_width:stop)
         xlims!(start, stop)
         ylims!(ylims[i]...)
         hideydecorations!(ax, grid=false)
         #
-        ax = Axis(fig[i,3], title="State $i (ρ=32)"; kwargs...) 
+        ax = Axis(fig[i,3], title="Macrostate $(states[i]) (ρ=32)"; kwargs...) 
         hist!(ax, ht_32[i], normalization=:probability,bins=bins=start:bin_width:stop)
         xlims!(start, stop)
         ylims!(ylims[i]...)

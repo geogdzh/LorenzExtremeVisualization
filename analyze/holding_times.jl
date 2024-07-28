@@ -43,7 +43,7 @@ begin
         start, stop = xlims[i]
         bin_num= 39 #(i==2 ? 40 : 40)
         bin_width = (stop-start)/bin_num
-        kwargs = (; xlabel=(i==3 ? "Holding time" : ""), titlesize=22, ylabelsize=20, xlabelsize=20, yticklabelsize=18, xticklabelsize=18, xticks = xlabels[i])
+        kwargs = (; xlabel=(i==3 ? "Holding time" : ""), titlesize=26, ylabelsize=26, xlabelsize=26, yticklabelsize=24, xticklabelsize=24, xticks = xlabels[i])
         ax = Axis(fig[i,1], title="Macrostate $(states[i]) (ρ=26)", ylabel="Probability"; kwargs...) 
         hist!(ax, ht_26[i], normalization=:probability,bins=start:bin_width:stop)
         xlims!(start, stop)

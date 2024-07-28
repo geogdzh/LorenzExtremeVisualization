@@ -64,13 +64,13 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     ns = [1, 5, 9, 2, 6, 10]
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
-        ax = Axis(fig[i,j], title="State $n", titlesize=22, ylabel=(j==1 ? "Mean holding time" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20)#, xticklabelsize=18, yticklabelsize=18)
+        ax = Axis(fig[i,j], title="State $n", titlesize=22, ylabel=(j==1 ? "Mean holding time" : ""), xlabel=(i==2 ? "ρ" : ""), ylabelsize=22, xlabelsize=22, xticklabelsize=20, yticklabelsize=20)
         plot_evolution(n,n, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta, ensemble_generators=ensemble_generators)
         if i == 1
             hidexdecorations!(ax, grid=false)
         end
         if n == 1
-            axislegend(ax)
+            axislegend(ax, labelsize=18)
         end
 
     end
@@ -80,8 +80,8 @@ function plot_diagonals(static_ref; sliding_windows=nothing, middle_values=nothi
     #     ax = Axis(fig[i,j], title="$box")
     #     plot_evolution(box,box, ref_list, static_ref; sliding_windows=sliding_windows, middle_values=middle_values, bayesian_delta=bayesian_delta)
     # end
-    fig
     save("figs/diagonal_evolution_ensemble.png", fig)
+    fig
 end
 
 plot_diagonals(sliding_reference; sliding_windows=sliding_bayesian_dict[6], middle_values=middle_values, ensemble_generators=ensemble_generators) #bayesian_delta=bayesian_delta
@@ -127,24 +127,17 @@ function plot_diag_kl(metrics; metrics_sig)
     xticks = ["(27,29)", "(28,30)", "(29,31)", "(30,32)"]
     for i in 1:2, j in 1:3
         n = popfirst!(ns)
-        ax = Axis(fig[i,j], title="State $n", ylabel=(j==1 ? "D" : ""), ylabelsize=20, xlabel=(i==2 ? "ρ" : ""), xlabelsize=20, xticks=(28:31, xticks), yscale=log10)
+        ax = Axis(fig[i,j], title="State $n", titlesize=22, ylabel=(j==1 ? "D" : ""), xlabel=(i==2 ? "ρ" : ""), xticks=(28:31, xticks), yscale=log10, ylabelsize=22, xlabelsize=22, xticklabelsize=20, yticklabelsize=20)
         ylims!(ax,(10^-2.5,1e3))
         plot_kl(n, n, metrics; metrics_sig=metrics_sig)
         if i == 1
             hidexdecorations!(ax, grid=false)
         end
         if n == 1
-            axislegend(ax, position=:lb)
+            axislegend(ax, position=:lb, labelsize=18)
         end
     end
-    # fig = Figure(resolution=(3200,1200))
-    # for i in 1:3, j in 1:4
-    #     box = j+4*(i-1) 
-    #     ax = Axis(fig[i,j])
-    #     plot_kl(box, box, metrics; metrics_sig=metrics_sig)
-    #     axislegend(ax, position=:lt)
-    # end
-    # save("figs/diagonal_kl-updated.png", fig)
+    save("figs/diagonal_kl-updated.png", fig)
     fig
 end
             
@@ -177,7 +170,7 @@ function plot_off_diagonal(static_ref, metrics; metrics_sig=nothing, sliding_win
             axislegend(ax, position=:lb)
         end
     end
-    save("figs/newest/off_diagonal_evolution_ensemble-100-updated.png", fig)
+    # save("figs/newest/off_diagonal_evolution_ensemble-100-updated.png", fig)
     fig
 end
 
@@ -198,7 +191,7 @@ steady_states = [steady_state(generator(static_mc_dict[i])) for i in full_values
 colors = [:red, :orange, :lightblue, :blue, :violet]
 begin
     fig = Figure(resolution=(800,600))
-    ax = Axis(fig[1,1], xlabel="ρ (reference)", ylabel="D")#, ylabelsize=26, xlabelsize=26, xticklabelsize=20, yticklabelsize=20)
+    ax = Axis(fig[1,1], xlabel="ρ (reference)", ylabel="D", ylabelsize=24, xlabelsize=24, xticklabelsize=18, yticklabelsize=18)
 
     #now for the full one
     q = steady_state(bayesian_delta)
@@ -225,7 +218,7 @@ begin
     end
 
 
-    axislegend("Average over ρ=", position=:ct)#, labelsize=20, titlesize=26)
+    axislegend("Average over ρ=", position=:ct, labelsize=18, titlesize=18)
     save("figs/steady_state_kl_aug.png", fig)
     fig
-end
+end 

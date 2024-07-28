@@ -1,7 +1,7 @@
 include("analyze_util.jl")
 
 # create directory for figures
-isdir(pwd() * "/figs") ? nothing : mkdir(pwd() * "/data")
+isdir(pwd() * "/figs") ? nothing : mkdir(pwd() * "/figs")
 
 ## 
 include("comparing_climates.jl")

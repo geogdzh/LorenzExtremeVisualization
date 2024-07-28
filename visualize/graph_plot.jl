@@ -8,9 +8,9 @@ using SparseArrays, Graphs, GraphMakie, Printf
 include("../analyze/analyze_util.jl")
 
 mc, dt, x = read_markov_chain("data/lorenz26.hdf5"; include_x=true)
-mc26 = aggregate(mc)
+mc26 = aggregate(mc[1:10000000])
 mc, dt, x = read_markov_chain("data/lorenz32.hdf5"; include_x=true)
-mc32 = aggregate(mc)
+mc32 = aggregate(mc[1:10000000])
 
 
 gen26 = generator(mc26; dt=dt)
@@ -50,35 +50,41 @@ function edge_graph(ax, mc)
     # node_color = [(cgrad(colormap)[i]) for i in 1:nv(g_Q)]
     node_color = [(colors[i]) for i in 1:nv(g_Q)]
     edge_attr = (; linestyle=[:dot, :dash, :dash, :dash, :dot, :dash, :dash, :dash, :dot])
-    elabels_fontsize = 28
+    elabels_fontsize = 36
     nlabels_fontsize = 36
-    node_size = 80.0
+    node_size = 50.0
 
     edge_width_Q = [10.0 for i in 1:ne(g_Q)]
     arrow_size_Q = [40.0 for i in 1:ne(g_Q)]
     # node_labels_Q = [L"A (normal)   \newline $<T_A>=%$(hts[1])$   ", L"B (medium)   \n $<T_B>=%$(hts[2])$   ", L"C (high)  \n $<T_C>=%$(hts[3])$  "]#repr.(1:nv(g_Q))
-    node_labels_Q = [L"<T_A>=%$(hts[1])   ", L"$<T_B>=%$(hts[2])$   ", L"$<T_C>=%$(hts[3])$  "]#repr.(1:nv(g_Q))
+    node_labels_Q = [L"<T_A>=%$(hts[1])         ", L"$<T_B>=%$(hts[2])$   ", L"$<T_C>=%$(hts[3])$  "]#repr.(1:nv(g_Q))
+
     nlabels_align = [(:right,:bottom), (:right,:center), (:right,:bottom)]
 
     #                   ; edge_color=edge_color_Q, edge_width=edge_width_Q
     kwargs_edges = (; elabels=elabels, elabels_color=elabels_color, elabels_fontsize=elabels_fontsize, edge_color=edge_color_Q, edge_width=edge_width_Q)
     kwargs_nodes  = (; node_color=node_color, node_size=node_size, nlabels=node_labels_Q, nlabels_fontsize=nlabels_fontsize, nlabels_align=nlabels_align)
     kwargs_arrows = (; arrow_size=arrow_size_Q)
+    # kwargs_edges = (; elabels_color=elabels_color, edge_color=edge_color_Q, edge_width=edge_width_Q)
+    # kwargs_nodes  = (; node_color=node_color, node_size=node_size)
+    # kwargs_arrows = (; arrow_size=arrow_size_Q)
         
     # p_Q = graphplot!(ax, g_Q; kwargs_edges..., kwargs_nodes..., kwargs_arrows...)
     graphplot!(ax, g_Q; kwargs_edges..., kwargs_nodes..., kwargs_arrows..., elabels_distance=20)#, layout = Stress())
     hidedecorations!(ax)
     hidespines!(ax)
 end
+##
 
-
-fig = Figure(resolution=(2000, 750))
+fig = Figure(resolution=(1500, 560))
 colors = ["blue", "violet", "red"]
 
-ax_26 = Axis(fig[1, 1]; title="ρ=26", titlesize=40)
+ax_26 = Axis(fig[1, 1]; title="ρ=26", titlesize=36)
+# edge_graph(ax_26, gen26)#mc26)
 edge_graph(ax_26, mc26)
 
-ax_32 = Axis(fig[1, 2]; title="ρ=32", titlesize=40)
+ax_32 = Axis(fig[1, 2]; title="ρ=32", titlesize=36)
+# edge_graph(ax_32, gen32)#mc32)
 edge_graph(ax_32, mc32)
 
 
@@ -90,5 +96,5 @@ edge_graph(ax_32, mc32)
 # scatter!(ax_new, x[1, inds], x[2, inds], x[3, inds], color=colors[inds], markersize=20.0, markerspacing=0.1, markerstrokewidth=0.0)
 # rotate_cam!(ax_new.scene, (0.0, -10.5, 0.0))
 
-save("figs/three-state-network-comparison-newest.png", fig)
+# save("figs/three-state-network-comparison-newest.png", fig)
 display(fig)
